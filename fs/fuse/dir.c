@@ -416,7 +416,7 @@ static struct dentry *fuse_lookup(struct inode *dir, struct dentry *entry,
  * 'mknod' + 'open' requests.
  */
 static int fuse_create_open(struct inode *dir, struct dentry *entry,
-			    struct opendata *od, unsigned flags,
+			    struct file *file, unsigned flags,
 			    umode_t mode, int *opened)
 {
 	int err;
@@ -428,7 +428,6 @@ static int fuse_create_open(struct inode *dir, struct dentry *entry,
 	struct fuse_open_out outopen;
 	struct fuse_entry_out outentry;
 	struct fuse_file *ff;
-	struct file *file;
 
 	forget = fuse_alloc_forget();
 	err = -ENOMEM;
@@ -496,14 +495,12 @@ static int fuse_create_open(struct inode *dir, struct dentry *entry,
 	d_instantiate(entry, inode);
 	fuse_change_entry_timeout(entry, &outentry);
 	fuse_invalidate_attr(dir);
-	file = finish_open(od, entry, generic_file_open, opened);
-	if (IS_ERR(file)) {
-		err = PTR_ERR(file);
+	err = finish_open(file, entry, generic_file_open, opened);
+	if (err) {
 		fuse_sync_release(ff, flags);
 	} else {
 		file->private_data = fuse_file_get(ff);
 		fuse_finish_open(inode, file);
-		err = 0;
 	}
 	return err;
 
@@ -519,7 +516,7 @@ out_err:
 
 static int fuse_mknod(struct inode *, struct dentry *, umode_t, dev_t);
 static int fuse_atomic_open(struct inode *dir, struct dentry *entry,
-			    struct opendata *od, unsigned flags,
+			    struct file *file, unsigned flags,
 			    umode_t mode, int *opened)
 {
 	int err;
@@ -544,7 +541,7 @@ static int fuse_atomic_open(struct inode *dir, struct dentry *entry,
 	if (fc->no_create)
 		goto mknod;
 
-	err = fuse_create_open(dir, entry, od, flags, mode, opened);
+	err = fuse_create_open(dir, entry, file, flags, mode, opened);
 	if (err == -ENOSYS) {
 		fc->no_create = 1;
 		goto mknod;
@@ -558,7 +555,7 @@ mknod:
 	if (err)
 		goto out_dput;
 no_open:
-	finish_no_open(od, res);
+	finish_no_open(file, res);
 	return 1;
 }
 
