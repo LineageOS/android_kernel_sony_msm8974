@@ -101,6 +101,24 @@
       "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_86da1d77",
+        "filename": "drivers/staging/prima/firmware_bin/WCNSS_qcom_cfg.ini",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 19
+      },
+      "writtenOn": "2014-07-31T04:14:32Z",
+      "side": 1,
+      "message": "as the CAF repo cant be used as is (Kbuild an Makefile) i prefer to remove all the stuff which is not needed in kernel build process",
+      "parentUuid": "9a061dce_c68d357d",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
