@@ -2,6 +2,40 @@
   "comments": [
     {
       "key": {
+        "uuid": "9a061dce_06ee0d22",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:11:03Z",
+      "side": 1,
+      "message": "s/amami//",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_66f3890b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:11:03Z",
+      "side": 1,
+      "message": "Standard procedure is to add something along the lines of \"Bug: CYAN-4312\" on a separate line.",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9a061dce_a6964192",
         "filename": "drivers/staging/Makefile",
         "patchSetId": 1
