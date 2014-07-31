@@ -70,6 +70,23 @@
     },
     {
       "key": {
+        "uuid": "9a061dce_06d56d42",
+        "filename": "drivers/staging/prima/CORE/VOSS/inc/wlan_hdd_misc.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:24:54Z",
+      "side": 1,
+      "message": "Nope, change it back.",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9a061dce_e6903998",
         "filename": "drivers/staging/prima/Kbuild",
         "patchSetId": 1
