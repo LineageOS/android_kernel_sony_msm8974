@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a061dce_a6964192",
+        "filename": "drivers/staging/Makefile",
+        "patchSetId": 1
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:08:06Z",
+      "side": 1,
+      "message": "Why duplicate this to a new config?",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_86933da3",
+        "filename": "drivers/staging/prima/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:08:06Z",
+      "side": 1,
+      "message": "We usually remove it from here to avoid being included by the build system",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_e6903998",
+        "filename": "drivers/staging/prima/Kbuild",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:08:06Z",
+      "side": 1,
+      "message": "No need to rename (from what we had in CM), can keep it as Makefile.",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_c68d357d",
+        "filename": "drivers/staging/prima/firmware_bin/WCNSS_qcom_cfg.ini",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-07-31T04:08:06Z",
+      "side": 1,
+      "message": "Not sure why we didn\u0027t have firmware_bin/* here before, any idea Giulio?",
+      "revId": "6ad5a089c37b32bf957ec97a15decc812a34fb82",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
