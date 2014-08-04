@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a061dce_fc69e18c",
+        "filename": "drivers/staging/prima/Kconfig",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-08-04T15:30:24Z",
+      "side": 1,
+      "message": "This change is unnecessary, and is something changed by us.",
+      "revId": "524e86d8700a1ee2e45e2a015af90096e25879cb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
