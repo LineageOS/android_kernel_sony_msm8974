@@ -16,6 +16,24 @@
       "revId": "524e86d8700a1ee2e45e2a015af90096e25879cb",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_5ca1eda8",
+        "filename": "drivers/staging/prima/Kconfig",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 9959
+      },
+      "writtenOn": "2014-08-05T20:01:06Z",
+      "side": 1,
+      "message": "Why did you change this line?\nCONFIG_ENABLE_LINUX_REG is referred to from source code like:\n#ifdef CONFIG_ENABLE_LINUX_REG, and ENABLE_LINUX_REG seems meaningless.\nIt is preferable that define CONFIG_ENABLE_LINUX_REG\u003dy in kernel config file.",
+      "parentUuid": "9a061dce_fc69e18c",
+      "revId": "524e86d8700a1ee2e45e2a015af90096e25879cb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
