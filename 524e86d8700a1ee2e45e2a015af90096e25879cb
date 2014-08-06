@@ -34,6 +34,24 @@
       "revId": "524e86d8700a1ee2e45e2a015af90096e25879cb",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_226df498",
+        "filename": "drivers/staging/prima/Kconfig",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-08-06T02:18:33Z",
+      "side": 1,
+      "message": "config FOO implies CONFIG_FOO, so this is a typo, which was fixed by us, which is why I asked you to revert it.\n\nThis will make it CONFIG_CONFIG_ENABLE_LINUX_REG, which isn\u0027t what we want.",
+      "parentUuid": "9a061dce_5ca1eda8",
+      "revId": "524e86d8700a1ee2e45e2a015af90096e25879cb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
