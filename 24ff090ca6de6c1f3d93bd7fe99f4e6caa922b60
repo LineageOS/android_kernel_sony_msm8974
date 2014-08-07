@@ -16,6 +16,24 @@
       "revId": "24ff090ca6de6c1f3d93bd7fe99f4e6caa922b60",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a061dce_4dcc9935",
+        "filename": "drivers/staging/prima/Kconfig",
+        "patchSetId": 3
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 9959
+      },
+      "writtenOn": "2014-08-07T04:23:28Z",
+      "side": 1,
+      "message": "\"yes\" by default is a current cm11 setting. \"no\" by default is an original prima driver setting. Which is better? (both are working)",
+      "parentUuid": "9a061dce_ed548d55",
+      "revId": "24ff090ca6de6c1f3d93bd7fe99f4e6caa922b60",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
