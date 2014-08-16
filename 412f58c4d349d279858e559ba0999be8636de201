@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7a1b2928_7f4963d0",
+        "filename": "drivers/leds/leds-qpnp.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2918,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2014-08-16T06:48:32Z",
+      "side": 1,
+      "message": "Is there a reason there\u0027s two statements on this line?",
+      "revId": "412f58c4d349d279858e559ba0999be8636de201",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7a1b2928_bf113bb2",
+        "filename": "drivers/leds/leds-qpnp.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2948,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2014-08-16T06:48:32Z",
+      "side": 1,
+      "message": "could do a memory copy instead here?",
+      "revId": "412f58c4d349d279858e559ba0999be8636de201",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
