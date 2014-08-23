@@ -18,3 +18,4 @@ header-y += msmcal-hwdep.h
 header-y += tfa98xx.h
 header-y += sony-hweffect.h
 header-y += sony-hweffect-params.h
+header-y += audio_effects.h
