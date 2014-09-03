@@ -16,6 +16,24 @@
       "revId": "e84bf365e2ed65eda4a152d284cf84ee1458b587",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7a1b2928_b0ee6fea",
+        "filename": "arch/arm/configs/cm_rhine_amami_row_defconfig",
+        "patchSetId": 2
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-09-03T03:57:04Z",
+      "side": 1,
+      "message": "I kanged this from shinano (kernel_sony_msm8974pro), and left it enabled because of https://github.com/CyanogenMod/android_kernel_sony_msm8974/blob/cm-11.0/block/Kconfig.iosched#L15",
+      "parentUuid": "7a1b2928_ee55aec6",
+      "revId": "e84bf365e2ed65eda4a152d284cf84ee1458b587",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
