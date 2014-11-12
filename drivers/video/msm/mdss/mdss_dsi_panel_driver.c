@@ -2910,6 +2910,7 @@ int mdss_dsi_panel_init(struct device_node *node,
 	char *path_name = "mdss_dsi_panel";
 	struct device_node *dsi_ctrl_np = NULL;
 	struct mdss_panel_info *pinfo;
+	struct platform_device *ctrl_pdev = NULL;
 	struct mdss_panel_specific_pdata *spec_pdata = NULL;
 
 	if (!node || !ctrl_pdata) {
@@ -2948,6 +2949,8 @@ int mdss_dsi_panel_init(struct device_node *node,
 		goto error;
 	}
 
+	ctrl_pdev = of_find_device_by_node(dsi_ctrl_np);
+
 	rc = dev_set_drvdata(&virtdev, ctrl_pdata);
 
 	spec_pdata->driver_ic = PANEL_DRIVER_IC_NONE;
@@ -2970,7 +2973,11 @@ int mdss_dsi_panel_init(struct device_node *node,
 		gpio_free(lcd_id);
 		goto exit_lcd_id;
 	}
+
+	mdss_dsi_panel_power_detect(ctrl_pdev, 1);
 	spec_pdata->driver_ic = gpio_get_value(lcd_id);
+	mdss_dsi_panel_power_detect(ctrl_pdev, 0);
+
 	pr_info("%s: gpio=%d\n", __func__, spec_pdata->driver_ic);
 	gpio_free(lcd_id);
 exit_lcd_id:
