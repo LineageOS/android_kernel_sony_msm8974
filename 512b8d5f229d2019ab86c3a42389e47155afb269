@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aa08908_d6996621",
+        "filename": "sound/soc/msm/apq8074.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 630,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-19T20:52:15Z",
+      "side": 1,
+      "message": "This isn\u0027t used at all for rhine, the only apq8074 rhine is the Japan only togarI_windy which we don\u0027t support.",
+      "revId": "512b8d5f229d2019ab86c3a42389e47155afb269",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aa08908_768992ca",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 770,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-19T20:52:15Z",
+      "side": 1,
+      "message": "For below comment, add those lines here.",
+      "revId": "512b8d5f229d2019ab86c3a42389e47155afb269",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aa08908_16a48e55",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 790,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-19T20:52:15Z",
+      "side": 1,
+      "message": "I would rather add the 5 lines below in an ifdef above.",
+      "revId": "512b8d5f229d2019ab86c3a42389e47155afb269",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aa08908_568616ba",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1814,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-19T20:52:15Z",
+      "side": 1,
+      "message": "The above two comments negate the need for this.",
+      "revId": "512b8d5f229d2019ab86c3a42389e47155afb269",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
