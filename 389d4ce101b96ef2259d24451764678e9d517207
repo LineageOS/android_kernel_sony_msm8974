@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aa08908_d1ba10c0",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 766,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-20T04:37:11Z",
+      "side": 1,
+      "message": "This needs to be updated.",
+      "revId": "389d4ce101b96ef2259d24451764678e9d517207",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aa08908_f1b58cd0",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 771,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2014-12-20T04:37:11Z",
+      "side": 1,
+      "message": "This needs to be ifdefd for RHINE",
+      "revId": "389d4ce101b96ef2259d24451764678e9d517207",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
