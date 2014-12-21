@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aa08908_39b53acd",
+        "filename": "sound/soc/msm/msm8974.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 773,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2014-12-21T10:10:56Z",
+      "side": 1,
+      "message": "tabs should be used for indentation",
+      "revId": "58c3268cc5d74e2e6de2b2685319860aa6754e3a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
