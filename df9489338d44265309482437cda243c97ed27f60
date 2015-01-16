@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a9d85d2_8277a801",
+        "filename": "arch/arm/mach-msm/board-sony_rhine-gpiomux-ref.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2015-01-16T09:20:45Z",
+      "side": 1,
+      "message": "All of the changes to this are a no-op and not needed.",
+      "revId": "df9489338d44265309482437cda243c97ed27f60",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5a9d85d2_c25ff073",
+        "filename": "arch/arm/mach-msm/sony_gpiomux.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 2195
+      },
+      "writtenOn": "2015-01-16T09:20:45Z",
+      "side": 1,
+      "message": "Does having this help?",
+      "revId": "df9489338d44265309482437cda243c97ed27f60",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
