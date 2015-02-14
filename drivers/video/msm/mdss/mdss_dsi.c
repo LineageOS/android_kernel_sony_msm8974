@@ -1391,7 +1391,7 @@ int mdss_dsi_panel_power_detect(struct platform_device *pdev, int enable)
 		if (IS_ERR(vdd_vreg)) {
 			pr_err("could not get 8941_lvs3, rc = %ld\n",
 					PTR_ERR(vdd_vreg));
-			return -ENODEV;
+			return;
 		}
 	}
 
@@ -1400,13 +1400,13 @@ int mdss_dsi_panel_power_detect(struct platform_device *pdev, int enable)
 		if (ret < 0) {
 			pr_err("%s: vdd_vreg set regulator mode failed.\n",
 						       __func__);
-			return ret;
+			return;
 		}
 
 		ret = regulator_enable(vdd_vreg);
 		if (ret) {
 			pr_err("%s: Failed to enable regulator.\n", __func__);
-			return ret;
+			return;
 		}
 
 		msleep(50);
@@ -1415,14 +1415,14 @@ int mdss_dsi_panel_power_detect(struct platform_device *pdev, int enable)
 		ret = regulator_disable(vdd_vreg);
 		if (ret) {
 			pr_err("%s: Failed to disable regulator.\n", __func__);
-			return ret;
+			return;
 		}
 
 		ret = regulator_set_optimum_mode(vdd_vreg, 100);
 		if (ret < 0) {
 			pr_err("%s: vdd_vreg set regulator mode failed.\n",
 						       __func__);
-			return ret;
+			return;
 		}
 
 		msleep(20);
