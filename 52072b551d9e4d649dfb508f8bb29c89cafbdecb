@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9f0e0f27_235f9542",
+        "filename": "kernel/Makefile",
+        "patchSetId": 2
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 9207
+      },
+      "writtenOn": "2015-08-07T22:45:42Z",
+      "side": 1,
+      "message": "this is not from the commit",
+      "range": {
+        "startLine": 13,
+        "startChar": 29,
+        "endLine": 13,
+        "endChar": 39
+      },
+      "revId": "52072b551d9e4d649dfb508f8bb29c89cafbdecb",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
