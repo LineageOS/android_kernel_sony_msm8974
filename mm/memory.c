@@ -1692,7 +1692,7 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 
 	VM_BUG_ON(!!pages != !!(gup_flags & FOLL_GET));
 
-	/* 
+	/*
 	 * Require read or write permissions.
 	 * If FOLL_FORCE is set, we only require the "MAY" flags.
 	 */
@@ -3494,11 +3494,12 @@ int handle_pte_fault(struct mm_struct *mm,
 	entry = *pte;
 	if (!pte_present(entry)) {
 		if (pte_none(entry)) {
-			if (vma->vm_ops)
+			if (vma_is_anonymous(vma))
+				return do_anonymous_page(mm, vma, address,
+							 pte, pmd, flags);
+			else
 				return do_linear_fault(mm, vma, address,
-						pte, pmd, flags, entry);
-			return do_anonymous_page(mm, vma, address,
-						 pte, pmd, flags);
+							 pte, pmd,flags, entry);
 		}
 		if (pte_file(entry))
 			return do_nonlinear_fault(mm, vma, address,
