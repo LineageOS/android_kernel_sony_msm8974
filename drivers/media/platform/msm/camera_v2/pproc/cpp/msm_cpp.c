@@ -874,7 +874,7 @@ static void cpp_load_fw(struct cpp_device *cpp_dev, char *fw_name_bin)
 		rc = request_firmware(&fw, fw_name_bin, dev);
 		if (rc) {
 			dev_err(dev,
-				"Fail to loc blob %s from dev %p, Error: %d\n",
+				"Fail to loc blob %s from dev %pK, Error: %d\n",
 				fw_name_bin, dev, rc);
 		}
 		if (NULL != fw)
@@ -966,7 +966,7 @@ static int cpp_open_node(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 		return -ENODEV;
 	}
 
-	CPP_DBG("open %d %p\n", i, &fh->vfh);
+	CPP_DBG("open %d %pK\n", i, &fh->vfh);
 	cpp_dev->cpp_open_cnt++;
 	if (cpp_dev->cpp_open_cnt == 1) {
 		cpp_init_hardware(cpp_dev);
@@ -1192,7 +1192,7 @@ static void msm_cpp_do_timeout_work(struct work_struct *work)
 	pr_err("cpp_timer_callback called. (jiffies=%lu)\n",
 		jiffies);
 	if (!work || cpp_timer.data.cpp_dev->state != CPP_STATE_ACTIVE) {
-		pr_err("Invalid work:%p or state:%d\n", work,
+		pr_err("Invalid work:%pK or state:%d\n", work,
 			cpp_timer.data.cpp_dev->state);
 		return;
 	}
@@ -1539,7 +1539,7 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 	}
 
 	if ((ioctl_ptr->ioctl_ptr == NULL) || (ioctl_ptr->len == 0)) {
-		pr_err("ioctl_ptr OR ioctl_ptr->len is NULL  %p %d\n",
+		pr_err("ioctl_ptr OR ioctl_ptr->len is NULL  %pK %d\n",
 			ioctl_ptr, ioctl_ptr->len);
 		return -EINVAL;
 	}
