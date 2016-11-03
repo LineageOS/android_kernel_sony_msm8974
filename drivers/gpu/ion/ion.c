@@ -1455,8 +1455,10 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		if (copy_to_user((void __user *)arg, &data, sizeof(data))) {
 			ion_free(client, handle);
+			ion_handle_put(handle);
 			return -EFAULT;
 		}
+		ion_handle_put(handle);
 		break;
 	}
 	case ION_IOC_FREE:
