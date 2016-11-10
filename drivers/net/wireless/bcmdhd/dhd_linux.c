@@ -8670,6 +8670,7 @@ int dhd_dev_set_whitelist_ssid(struct net_device *dev, wl_ssid_whitelist_t *ssid
 	return err;
 }
 
+#ifdef DHD_ANQPO_SUPPORT
 void * dhd_dev_process_anqpo_result(struct net_device *dev,
 			const void  *data, uint32 event, int *send_evt_bytes)
 {
@@ -8677,6 +8678,7 @@ void * dhd_dev_process_anqpo_result(struct net_device *dev,
 
 	return (dhd_pno_process_anqpo_result(&dhd->pub, data, event, send_evt_bytes));
 }
+#endif /* DHD_ANQPO_SUPPORT */
 #endif /* GSCAN_SUPPORT */
 
 int dhd_dev_set_rssi_monitor_cfg(struct net_device *dev, int start,
