@@ -617,7 +617,8 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 			size_t size)
 {
 	int pcount = 0, ret = 0;
-	int j, len, page_size, sglen_alloc, sglen = 0;
+	int j, page_size, sglen_alloc, sglen = 0;
+	size_t len;
 	struct page **pages = NULL;
 	pgprot_t page_prot = pgprot_writecombine(PAGE_KERNEL);
 	void *ptr;
@@ -817,7 +818,7 @@ kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 			    size_t size)
 {
 	size = PAGE_ALIGN(size);
-	if (size == 0)
+	if (size == 0 || size > UINT_MAX)
 		return -EINVAL;
 
 	return _kgsl_sharedmem_page_alloc(memdesc, pagetable, size);

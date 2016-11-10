@@ -1,0 +1,67 @@
+/* arch/arm/boot/dts/msm8974pro-ab-shinano_canopus.dtsi
+ *
+ * Copyright (C) 2014 Sony Mobile Communications Inc.
+ *
+ * Author: Kouhei Fujiya <Kouhei.X.Fujiya@sonymobile.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+	/* I2C : BLSP6 */
+	i2c@f9928000 {
+		nfc@28 {
+			compatible = "nxp,pn547";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <24 0x1>;
+			nxp,pvdd_en = <&pm8941_gpios 34 0x01>;
+			nxp,irq_gpio = <&msmgpio 24 0x00>;
+			nxp,dwld_en = <&msmgpio 57 0x00>;
+			nxp,ven = <&pm8941_mpps 2 0x01>;
+			dynamic_config;
+			configure_gpio = <&pm8941_gpios 33 0x00>;
+			configure_mpp = <&pm8941_mpps 2 0x00>;
+		};
+	};
+};
+
+&pm8941_chg {
+	qcom,aging-vddmax-mv = <4300>;
+	qcom,aging-warm-bat-mv = <4200>;
+	qcom,aging-cool-bat-mv = <4300>;
+	qcom,aging-vddmax-mv-l2 = <4250>;
+	qcom,aging-warm-bat-mv-l2 = <4200>;
+	qcom,aging-cool-bat-mv-l2 = <4250>;
+	qcom,aging-ibatmax-ma = <1500>;
+	qcom,aging-warm-ibatmax-ma = <900>;
+	qcom,aging-cool-ibatmax-ma = <900>;
+};
+
+&pm8941_bms {
+	qcom,enable-aging-func;
+	qcom,aging-fcc-threshold = <90>;
+	qcom,aging-max-voltage-uv = <4300000>;
+	qcom,aging-max-voltage-uv-l2 = <4250000>;
+	qcom,aging-soc-convert = <0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17
+		18 19 20 21 22 23 24 25 26 27 28 29 30 32 33 34 35 36 37 38 39
+		40 41 42 44 45 46 47 48 49 50 51 52 53 54 56 57 58 59 60 61 62
+		63 64 65 66 68 69 70 71 72 73 74 75 76 77 78 80 81 82 83 84 85
+		86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 100 100 100 100
+		100>;
+	qcom,aging-soc-convert-l2 = <0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17
+		18 19 20 21 22 24 25 26 27 29 30 31 32 34 35 36 37 39 40 41 42
+		44 45 46 47 49 50 51 52 54 55 56 57 59 60 61 62 64 65 66 67 69
+		70 71 72 74 75 76 77 79 80 81 82 83 84 85 86 87 88 89 90 91 92
+		93 94 95 96 97 98 99 100 100 100 100 100 100 100 100 100 100 100
+		100 100>;
+	qcom,min-fcc-learning-soc = <40>;
+	qcom,min-fcc-ocv-pc = <50>;
+};

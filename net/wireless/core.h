@@ -441,7 +441,8 @@ rdev_freq_to_chan(struct cfg80211_registered_device *rdev,
 		  int freq, enum nl80211_channel_type channel_type);
 int cfg80211_set_freq(struct cfg80211_registered_device *rdev,
 		      struct wireless_dev *wdev, int freq,
-		      enum nl80211_channel_type channel_type);
+		      enum nl80211_channel_type channel_type,
+		      enum nl80211_chan_width chan_width);
 
 u16 cfg80211_calculate_bitrate(struct rate_info *rate);
 int ieee80211_get_ratemask(struct ieee80211_supported_band *sband,
