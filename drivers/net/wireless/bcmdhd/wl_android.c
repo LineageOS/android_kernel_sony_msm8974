@@ -956,7 +956,7 @@ wl_android_set_roampref(struct net_device *dev, char *command, int total_len)
 
 	num_akm_suites = simple_strtoul(pcmd, NULL, 16);
 	if (num_akm_suites > MAX_NUM_SUITES) {
-		WL_ERR(("wrong num_akm_suites:%d.\n", num_akm_suites));
+		DHD_ERROR(("too many AKM suits = %d.\n", num_akm_suites));
 		return BCME_ERROR;
 	}
 	/* Increment for number of AKM suites field + space */
@@ -985,7 +985,7 @@ wl_android_set_roampref(struct net_device *dev, char *command, int total_len)
 	total_len_left -= (num_akm_suites * WIDTH_AKM_SUITE);
 	num_ucipher_suites = simple_strtoul(pcmd, NULL, 16);
 	if (num_ucipher_suites > MAX_NUM_SUITES) {
-		WL_ERR(("wrong num_ucipher_suites:%d.\n", num_ucipher_suites));
+		DHD_ERROR(("too many cipher suits = %d.\n", num_ucipher_suites));
 		return BCME_ERROR;
 	}
 	/* Increment for number of cipher suites field + space */
