@@ -1,6 +1,6 @@
 /* arch/arm/mach-msm/board-sony_shinano-wifi.c
  *
- * Copyright (C) 2013 Sony Mobile Communications Inc.
+ * Copyright (C) 2013 Sony Mobile Communications AB.
  * Copyright (C) 2013 LGE, Inc
  *
  * This software is licensed under the terms of the GNU General Public
@@ -22,33 +22,29 @@
 
 #include <mach/board-sony_shinano-wifi.h>
 
-static int shinano_wifi_cd;
-static void (*wifi_status_cb)(int card_present, void *dev_id);
-static void *wifi_status_cb_devid;
+static unsigned int g_wifi_detect;
+static void *sdc_dev;
+void (*sdc_status_cb)(int card_present, void *dev);
 static struct regulator *wifi_batfet;
 static int batfet_ena;
+
+static char *intf_macaddr = NULL;
 
 #define WIFI_POWER_PMIC_GPIO 18
 #define WIFI_IRQ_GPIO 67
 
 /* These definitions need to be aligned with bcmdhd */
+#define WLAN_STATIC_SCAN_BUF 5
 #define ESCAN_BUF_SIZE (64 * 1024) /* for WIPHY_ESCAN0 */
-#define WLAN_MEM_ARRAY_SENTINEL \
-		(sizeof(wlan_mem_array)/sizeof(wlan_mem_array[0]))
 
-#define WLAN_STATIC_SKB (WLAN_MEM_ARRAY_SENTINEL+1)
+#define PREALLOC_WLAN_NUMBER_OF_SECTIONS	4
+#define PREALLOC_WLAN_NUMBER_OF_BUFFERS		160
+#define PREALLOC_WLAN_SECTION_HEADER		24
 
-#if defined(CONFIG_64BIT)
-#define WLAN_DHD_INFO_BUF_SIZE                        (24 * 1024)
-#define WLAN_STATIC_DHD_WLFC_INFO_SIZE                (64 * 1024)
-#define WLAN_STATIC_DHD_WLFC_HANGER_SIZE              (128 * 1024)
-#else
-#define WLAN_DHD_INFO_BUF_SIZE                        (16 * 1024)
-#define WLAN_STATIC_DHD_WLFC_INFO_SIZE                (24 * 1024)
-#define WLAN_STATIC_DHD_WLFC_HANGER_SIZE              (64 * 1024)
-#endif /* CONFIG_64BIT */
-
-#define SIZE_ORDER(x) ((1 << x) * PAGE_SIZE)
+#define WLAN_SECTION_SIZE_0 (PREALLOC_WLAN_NUMBER_OF_BUFFERS * 128)  /* for PROT */
+#define WLAN_SECTION_SIZE_1 (PREALLOC_WLAN_NUMBER_OF_BUFFERS * 128)  /* for RXBUF */
+#define WLAN_SECTION_SIZE_2 (PREALLOC_WLAN_NUMBER_OF_BUFFERS * 512)  /* for DATABUF */
+#define WLAN_SECTION_SIZE_3 (PREALLOC_WLAN_NUMBER_OF_BUFFERS * 1024) /* for OSL_BUF */
 
 /* These definitions are copied from bcmdhd */
 #define DHD_SKB_HDRSIZE 336
@@ -60,27 +56,19 @@ static int batfet_ena;
 
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
 
-struct wlan_mem_prealloc {
-	void *mem_ptr;
-	unsigned long size;
+typedef struct wifi_mem_prealloc_struct {
+	    void *mem_ptr;
+	    unsigned long size;
+} wifi_mem_prealloc_t;
+
+static wifi_mem_prealloc_t wifi_mem_array[PREALLOC_WLAN_NUMBER_OF_SECTIONS] = {
+	{ NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER) },
+	{ NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER) },
+	{ NULL, (WLAN_SECTION_SIZE_2 + PREALLOC_WLAN_SECTION_HEADER) },
+	{ NULL, (WLAN_SECTION_SIZE_3 + PREALLOC_WLAN_SECTION_HEADER) }
 };
 
-static struct wlan_mem_prealloc wlan_mem_array[] = {
-	{NULL, (SIZE_ORDER(2))}, /* for PROT  (0) */
-	{NULL, (SIZE_ORDER(2))}, /* for RXBUF (1) */
-	{NULL, (SIZE_ORDER(4))}, /* for DATABUF (2) */
-	{NULL, (SIZE_ORDER(2))}, /* for osl (3) */
-	{NULL, (0)}, /* (4) */
-	{NULL, ESCAN_BUF_SIZE},  /* wlan_static_scan (5) */
-	{NULL, (0)}, /* (6) */
-	{NULL, WLAN_DHD_INFO_BUF_SIZE}, /* dhd_info (7) */
-	{NULL, WLAN_STATIC_DHD_WLFC_INFO_SIZE}, /* WLFC_HANGER_INFO (8) */
-	{NULL, (0)}, /* (9) */
-	{NULL, (0)}, /* (10) */
-	{NULL, (0)}, /* (11) */
-	{NULL, WLAN_STATIC_DHD_WLFC_HANGER_SIZE}, /* WLFC_HANGER_SIZE (12) */
-};
-
+static void *wlan_static_scan_buf;
 
 static int shinano_wifi_init_mem(void)
 {
@@ -104,20 +92,24 @@ static int shinano_wifi_init_mem(void)
 	if (!wlan_static_skb[i])
 		goto err_skb_alloc;
 
-	for (i = 0; i < WLAN_MEM_ARRAY_SENTINEL; i++) {
-		wlan_mem_array[i].mem_ptr =
-			kmalloc(wlan_mem_array[i].size, GFP_KERNEL);
-		if (!wlan_mem_array[i].mem_ptr)
+	for (i = 0; i < PREALLOC_WLAN_NUMBER_OF_SECTIONS; i++) {
+		wifi_mem_array[i].mem_ptr =
+			kmalloc(wifi_mem_array[i].size, GFP_KERNEL);
+		if (!wifi_mem_array[i].mem_ptr)
 			goto err_mem_alloc;
 	}
+
+	wlan_static_scan_buf = kmalloc(ESCAN_BUF_SIZE, GFP_KERNEL);
+	if (!wlan_static_scan_buf)
+		goto err_mem_alloc;
 
 	return 0;
 
 err_mem_alloc:
 	printk(KERN_ERR "%s: failed to allocate mem_alloc\n", __func__);
 	for (i--; i >= 0; i--) {
-		kfree(wlan_mem_array[i].mem_ptr);
-		wlan_mem_array[i].mem_ptr = NULL;
+		kfree(wifi_mem_array[i].mem_ptr);
+		wifi_mem_array[i].mem_ptr = NULL;
 	}
 
 	i = WLAN_SKB_BUF_NUM;
@@ -131,31 +123,37 @@ err_skb_alloc:
 	return -ENOMEM;
 }
 
+int wcf_status_register(void (*cb)(int card_present, void *dev), void *dev)
+{
+	pr_info("%s\n", __func__);
+
+	if (sdc_status_cb)
+		return -EINVAL;
+
+	sdc_status_cb = cb;
+	sdc_dev = dev;
+
+	return 0;
+}
+
+unsigned int wcf_status(struct device *dev)
+{
+	pr_info("%s: wifi_detect = %d\n", __func__, g_wifi_detect);
+	return g_wifi_detect;
+}
+
 static void *shinano_wifi_mem_prealloc(int section, unsigned long size)
 {
-	if (section == WLAN_STATIC_SKB) {
-		printk(KERN_INFO "prealloc returning skb, section:%d size:%lu\n",
-			section, size);
+	if (section == PREALLOC_WLAN_NUMBER_OF_SECTIONS)
 		return wlan_static_skb;
-	}
+	if (section == WLAN_STATIC_SCAN_BUF)
+		return wlan_static_scan_buf;
 
-	if ((section < 0) || (section >= WLAN_MEM_ARRAY_SENTINEL)) {
-		printk(KERN_ERR "prealloc returning null %d %lu\n",
-			section, size);
+	if ((section < 0) || (section > PREALLOC_WLAN_NUMBER_OF_SECTIONS))
 		return NULL;
-	}
-
-	if (size > wlan_mem_array[section].size) {
-		printk(KERN_ERR
-			"prealloc too small. Section:%d Size req:%lu Current size:%lu\n",
-			section, size, wlan_mem_array[section].size);
-		BUG();
+	if (size > wifi_mem_array[section].size)
 		return NULL;
-	}
-
-	printk(KERN_INFO "prealloc section %d, requested size: %lu, got size:%lu\n",
-			section, size, wlan_mem_array[section].size);
-	return wlan_mem_array[section].mem_ptr;
+	return wifi_mem_array[section].mem_ptr;
 }
 
 int shinano_wifi_set_power(int on)
@@ -185,11 +183,17 @@ int shinano_wifi_set_power(int on)
 	return 0;
 }
 
+static int shinano_wifi_set_reset(int on)
+{
+	return 0;
+}
+
 int shinano_wifi_set_carddetect(int val)
 {
-	shinano_wifi_cd = val;
-	if (wifi_status_cb)
-		wifi_status_cb(val, wifi_status_cb_devid);
+	g_wifi_detect = val;
+
+	if (sdc_status_cb)
+		sdc_status_cb(val, sdc_dev);
 	else
 		printk(KERN_WARNING "%s: Nobody to notify\n", __func__);
 	return 0;
@@ -198,15 +202,194 @@ int shinano_wifi_set_carddetect(int val)
 static struct resource shinano_wifi_resources[] = {
 	[0] = {
 		.name	= "bcmdhd_wlan_irq",
+		.start	= 0,
+		.end	= 0,
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL |
 			  IORESOURCE_IRQ_SHAREABLE,
 	},
 };
 
+#define ETHER_ADDR_LEN    6
+#define FILE_WIFI_MACADDR "/sys/devices/platform/bcmdhd_wlan/macaddr"
+
+static inline int xdigit (char c)
+{
+	unsigned d;
+
+	d = (unsigned)(c-'0');
+	if (d < 10)
+		return (int)d;
+	d = (unsigned)(c-'a');
+	if (d < 6)
+		return (int)(10+d);
+	d = (unsigned)(c-'A');
+	if (d < 6)
+		return (int)(10+d);
+	return -1;
+}
+
+struct ether_addr {
+	unsigned char ether_addr_octet[ETHER_ADDR_LEN];
+} __attribute__((__packed__));
+
+struct ether_addr *
+ether_aton_r (const char *asc, struct ether_addr * addr)
+{
+	int i, val0, val1;
+
+	for (i = 0; i < ETHER_ADDR_LEN; ++i) {
+		val0 = xdigit(*asc);
+		asc++;
+		if (val0 < 0)
+			return NULL;
+
+		val1 = xdigit(*asc);
+		asc++;
+		if (val1 < 0)
+			return NULL;
+
+		addr->ether_addr_octet[i] = (unsigned char)((val0 << 4) + val1);
+
+		if (i < ETHER_ADDR_LEN - 1) {
+			if (*asc != ':')
+				return NULL;
+			asc++;
+		}
+	}
+
+	if (*asc != '\0')
+		return NULL;
+
+	return addr;
+}
+
+struct ether_addr * ether_aton (const char *asc)
+{
+	static struct ether_addr addr;
+	return ether_aton_r(asc, &addr);
+}
+
+static int shinano_wifi_get_mac_addr(unsigned char *buf)
+{
+	int ret = 0;
+
+	mm_segment_t oldfs;
+	struct kstat stat;
+	struct file* fp;
+	int readlen = 0;
+	char macasc[128] = {0,};
+	uint rand_mac;
+	static unsigned char mymac[ETHER_ADDR_LEN] = {0,};
+	const unsigned char nullmac[ETHER_ADDR_LEN] = {0,};
+
+	if (buf == NULL)
+		return -EAGAIN;
+
+	memset(buf, 0x00, ETHER_ADDR_LEN);
+
+	oldfs = get_fs();
+	set_fs(get_ds());
+
+	ret = vfs_stat(FILE_WIFI_MACADDR, &stat);
+	if (ret) {
+		set_fs(oldfs);
+		pr_err("%s: Failed to get information from file %s (%d)\n",
+				__FUNCTION__, FILE_WIFI_MACADDR, ret);
+		goto random_mac;
+	}
+	set_fs(oldfs);
+
+	fp = filp_open(FILE_WIFI_MACADDR, O_RDONLY, 0);
+	if (IS_ERR(fp)) {
+		pr_err("%s: Failed to read error %s\n",
+				__FUNCTION__, FILE_WIFI_MACADDR);
+		goto random_mac;
+	}
+
+	readlen = kernel_read(fp, fp->f_pos, macasc, 17); // 17 = 12 + 5
+	if (readlen > 0) {
+		unsigned char* macbin;
+		struct ether_addr* convmac = ether_aton( macasc );
+
+		if (convmac == NULL) {
+			pr_err("%s: Invalid Mac Address Format %s\n",
+					__FUNCTION__, macasc );
+			goto random_mac;
+		}
+
+		macbin = convmac->ether_addr_octet;
+
+		pr_info("%s: READ MAC ADDRESS %02X:%02X:%02X:%02X:%02X:%02X\n",
+				__FUNCTION__,
+				macbin[0], macbin[1], macbin[2],
+				macbin[3], macbin[4], macbin[5]);
+
+		memcpy(buf, macbin, ETHER_ADDR_LEN);
+	} else {
+		goto random_mac;
+	}
+
+	filp_close(fp, NULL);
+	return ret;
+
+random_mac:
+
+	pr_debug("%s: %p\n", __func__, buf);
+
+	if (memcmp( mymac, nullmac, ETHER_ADDR_LEN) != 0) {
+		/* Mac displayed from UI is never updated..
+		   So, mac obtained on initial time is used */
+		memcpy(buf, mymac, ETHER_ADDR_LEN);
+		return 0;
+	}
+
+	srandom32((uint)jiffies);
+	rand_mac = random32();
+	buf[0] = 0x00;
+	buf[1] = 0x90;
+	buf[2] = 0x4c;
+	buf[3] = (unsigned char)rand_mac;
+	buf[4] = (unsigned char)(rand_mac >> 8);
+	buf[5] = (unsigned char)(rand_mac >> 16);
+
+	memcpy(mymac, buf, 6);
+
+	pr_info("[%s] Exiting. MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
+			__FUNCTION__,
+			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5] );
+
+	return 0;
+}
+
+static ssize_t macaddr_show(struct device *dev, struct device_attribute *attr,
+				char *buf)
+{
+	return sprintf(buf, "%s", intf_macaddr);
+}
+
+static ssize_t macaddr_store(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	return snprintf(intf_macaddr, count, "%s\n", buf);
+}
+
+DEVICE_ATTR(macaddr, 0644, macaddr_show, macaddr_store);
+
+static struct attribute *wifi_attrs[] = {
+	&dev_attr_macaddr.attr,
+	NULL
+};
+
+static struct attribute_group wifi_attr_grp = {
+	.attrs = wifi_attrs,
+};
+
 struct wifi_platform_data shinano_wifi_control = {
-	.set_power	= shinano_wifi_set_power,
-	.set_carddetect	= shinano_wifi_set_carddetect,
 	.mem_prealloc	= shinano_wifi_mem_prealloc,
+	.set_power	= shinano_wifi_set_power,
+	.set_reset	= shinano_wifi_set_reset,
+	.set_carddetect	= shinano_wifi_set_carddetect,
+	.get_mac_addr	= shinano_wifi_get_mac_addr,
 };
 
 static struct platform_device shinano_wifi = {
@@ -226,23 +409,14 @@ static int __init shinano_wifi_init(void)
 	shinano_wifi.resource->start = gpio_to_irq(WIFI_IRQ_GPIO);
 	shinano_wifi.resource->end = gpio_to_irq(WIFI_IRQ_GPIO);
 	platform_device_register(&shinano_wifi);
+
+	intf_macaddr = kzalloc(20*(sizeof(char)), GFP_KERNEL);
+	if (sysfs_create_group(&shinano_wifi.dev.kobj, &wifi_attr_grp) < 0) {
+		pr_err("%s: Unable to create sysfs\n", __func__);
+		kfree(intf_macaddr);
+	}
+
 	return 0;
 }
 
 device_initcall(shinano_wifi_init);
-
-int shinano_wifi_status_register(
-			void (*callback)(int card_present, void *dev_id),
-			void *dev_id)
-{
-	if (wifi_status_cb)
-		return -EAGAIN;
-	wifi_status_cb = callback;
-	wifi_status_cb_devid = dev_id;
-	return 0;
-}
-
-unsigned int shinano_wifi_status(struct device *dev)
-{
-	return shinano_wifi_cd;
-}
