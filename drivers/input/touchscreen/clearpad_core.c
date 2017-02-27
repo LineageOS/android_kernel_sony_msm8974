@@ -34,6 +34,10 @@
 #ifdef CONFIG_ARM
 #include <asm/mach-types.h>
 #endif
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#include <linux/fb.h>
+#endif
 
 #define SYN_CLEARPAD_VENDOR		0x1
 #define SYN_MAX_N_FINGERS		10
@@ -468,11 +472,11 @@ struct clearpad_cover_t {
 struct clearpad_wakeup_gesture_t {
 	bool supported;
 	bool enabled;
+	bool engaged;
 	bool lpm_disabled;
 	bool large_panel;
 	unsigned long time_started;
 	u32 timeout_delay;
-	bool suspend_with_enabled;
 };
 
 enum clearpad_hwtest_data_type_e {
@@ -594,6 +598,12 @@ struct clearpad_t {
 	u32 por_delay_after;
 	u32 reset_count;
 	const char *reset_cause;
+
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+	struct work_struct notify_resume;
+	struct work_struct notify_suspend;
+#endif
 };
 
 static void clearpad_funcarea_initialize(struct clearpad_t *this);
@@ -1404,10 +1414,6 @@ static int clearpad_initialize(struct clearpad_t *this)
 	int rc;
 	u8 buf[4];
 	struct clearpad_device_info_t *info = &this->device_info;
-
-	rc = clearpad_set_page(this, 0);
-	if (rc)
-		goto exit;
 
 	rc = clearpad_read_pdt(this);
 	if (rc)
@@ -2240,7 +2246,7 @@ static int clearpad_set_normal_mode(struct clearpad_t *this)
 
 	dev_dbg(&this->pdev->dev, "%s\n", __func__);
 
-	if (this->wakeup_gesture.suspend_with_enabled) {
+	if (this->wakeup_gesture.enabled) {
 		if (!this->wakeup_gesture.lpm_disabled) {
 			rc = clearpad_vreg_suspend(this, 0);
 			if (rc)
@@ -2341,7 +2347,7 @@ static int clearpad_set_suspend_mode(struct clearpad_t *this)
 
 	dev_dbg(&this->pdev->dev, "%s\n", __func__);
 
-	if (this->wakeup_gesture.enabled) {
+	if (this->wakeup_gesture.engaged) {
 		if (clearpad_is_valid_function(this, SYN_F11_2D)) {
 			rc = clearpad_put_bit(SYNF(this, F11_2D, CTRL, 0x00),
 				XY_REPORTING_MODE_WAKEUP_GESTURE_MODE,
@@ -2365,7 +2371,7 @@ static int clearpad_set_suspend_mode(struct clearpad_t *this)
 				"failed to enter wake-up gesture mode\n");
 			goto exit;
 		}
-
+		this->wakeup_gesture.enabled = true;
 		this->wakeup_gesture.time_started = jiffies - 1;
 		usleep_range(10000, 11000);
 		LOG_CHECK(this, "enter doze mode\n");
@@ -2374,7 +2380,6 @@ static int clearpad_set_suspend_mode(struct clearpad_t *this)
 			if (rc)
 				goto exit;
 		}
-		this->wakeup_gesture.suspend_with_enabled = true;
 	} else {
 		rc = clearpad_put_bit(SYNF(this, F01_RMI, CTRL, 0x00),
 			DEVICE_CONTROL_SLEEP_MODE_SENSOR_SLEEP,
@@ -2384,13 +2389,13 @@ static int clearpad_set_suspend_mode(struct clearpad_t *this)
 				"failed to exit normal mode\n");
 			goto exit;
 		}
+		this->wakeup_gesture.enabled = false;
 		usleep_range(10000, 11000);
 		clearpad_set_irq(this, this->pdt[SYN_F01_RMI].irq_mask, false);
 		LOG_CHECK(this, "enter sleep mode\n");
 		rc = clearpad_vreg_suspend(this, 1);
 		if (rc)
 			goto exit;
-		this->wakeup_gesture.suspend_with_enabled = false;
 	}
 
 	this->active &= ~SYN_ACTIVE_POWER;
@@ -3982,13 +3987,13 @@ static ssize_t clearpad_wakeup_gesture_store(struct device *dev,
 		goto exit;
 	}
 
-	this->wakeup_gesture.enabled = sysfs_streq(buf, "0") ? false : true;
+	this->wakeup_gesture.engaged = sysfs_streq(buf, "0") ? false : true;
 
 	device_init_wakeup(&this->pdev->dev,
-			this->wakeup_gesture.enabled ? 1 : 0);
+			this->wakeup_gesture.engaged ? 1 : 0);
 
 	dev_info(&this->pdev->dev, "wakeup gesture: %s",
-			this->wakeup_gesture.enabled ? "ENABLE" : "DISABLE");
+			this->wakeup_gesture.engaged ? "ENABLE" : "DISABLE");
 exit:
 	UNLOCK(this);
 
@@ -4498,6 +4503,62 @@ static int clearpad_pm_suspend_noirq(struct device *dev)
 	}
 	return 0;
 }
+
+#ifdef CONFIG_FB
+static void notify_resume(struct work_struct *work)
+{
+	struct clearpad_t *this = container_of(work,
+			struct clearpad_t, notify_resume);
+
+	LOCK(this);
+
+	if (!(this->active & SYN_ACTIVE_POWER))
+		clearpad_resume(&this->pdev->dev);
+
+	UNLOCK(this);
+
+	clearpad_set_power(this);
+}
+
+static void notify_suspend(struct work_struct *work)
+{
+	struct clearpad_t *this = container_of(work,
+			struct clearpad_t, notify_suspend);
+
+	LOCK(this);
+
+	if (this->active & SYN_ACTIVE_POWER)
+		clearpad_suspend(&this->pdev->dev);
+
+	UNLOCK(this);
+
+	clearpad_set_power(this);
+}
+
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	struct clearpad_t *this =
+		container_of(self, struct clearpad_t, fb_notif);
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK && this &&
+			this->pdev) {
+		blank = evdata->data;
+		if (*blank == FB_BLANK_UNBLANK) {
+			cancel_work_sync(&this->notify_suspend);
+			cancel_work_sync(&this->notify_resume);
+			schedule_work(&this->notify_resume);
+		} else if (*blank != FB_BLANK_UNBLANK) {
+			cancel_work_sync(&this->notify_resume);
+			cancel_work_sync(&this->notify_suspend);
+			schedule_work(&this->notify_suspend);
+		}
+	}
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_DEBUG_FS
 static int clearpad_get_num_tx_physical(struct clearpad_t *this, int num_tx)
@@ -5392,6 +5453,17 @@ static int __devinit clearpad_probe(struct platform_device *pdev)
 
 	this->state = SYN_STATE_RUNNING;
 
+#ifdef CONFIG_FB
+	this->fb_notif.notifier_call = fb_notifier_callback;
+	rc = fb_register_client(&this->fb_notif);
+	if (rc) {
+		dev_err(&this->pdev->dev, "Unable to register fb_notifier\n");
+	} else {
+		INIT_WORK(&this->notify_resume, notify_resume);
+		INIT_WORK(&this->notify_suspend, notify_suspend);
+	}
+#endif
+
 	/* sysfs */
 	rc = create_sysfs_entries(this);
 	if (rc)
@@ -5456,6 +5528,9 @@ err_sysfs_remove_group:
 #endif
 	remove_sysfs_entries(this);
 err_input_device:
+#ifdef CONFIG_FB
+	fb_unregister_client(&this->fb_notif);
+#endif
 	input_unregister_device(this->input);
 err_gpio_teardown:
 	clearpad_gpio_configure(this, 0);
@@ -5499,6 +5574,11 @@ static int __devexit clearpad_remove(struct platform_device *pdev)
 	debugfs_remove_recursive(this->debugfs);
 #endif
 	remove_sysfs_entries(this);
+#ifdef CONFIG_FB
+	fb_unregister_client(&this->fb_notif);
+	cancel_work_sync(&this->notify_resume);
+	cancel_work_sync(&this->notify_suspend);
+#endif
 	input_unregister_device(this->input);
 	clearpad_gpio_configure(this, 0);
 	clearpad_vreg_configure(this, 0);
