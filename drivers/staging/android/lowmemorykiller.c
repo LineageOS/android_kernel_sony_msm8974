@@ -45,8 +45,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/lmk.h>
 
-#define LMK_COUNT_INFO
-
 #ifdef CONFIG_HIGHMEM
 #define _ZONE ZONE_HIGHMEM
 #else
@@ -69,10 +67,6 @@ static int lowmem_minfree[6] = {
 };
 static int lowmem_minfree_size = 4;
 static int lmk_fast_run = 1;
-
-#ifdef LMK_COUNT_INFO
-static uint32_t lmk_count = 0;
-#endif
 
 static unsigned long lowmem_deathpending_timeout;
 
@@ -171,35 +165,6 @@ void tune_lmk_zone_param(struct zonelist *zonelist, int classzone_idx,
 	}
 }
 
-#ifdef CONFIG_HIGHMEM
-void adjust_gfp_mask(gfp_t *gfp_mask)
-{
-	struct zone *preferred_zone;
-	struct zonelist *zonelist;
-	enum zone_type high_zoneidx;
-
-	if (current_is_kswapd()) {
-		zonelist = node_zonelist(0, *gfp_mask);
-		high_zoneidx = gfp_zone(*gfp_mask);
-		first_zones_zonelist(zonelist, high_zoneidx, NULL,
-				&preferred_zone);
-
-		if (high_zoneidx == ZONE_NORMAL) {
-			if (zone_watermark_ok_safe(preferred_zone, 0,
-					high_wmark_pages(preferred_zone), 0,
-					0))
-				*gfp_mask |= __GFP_HIGHMEM;
-		} else if (high_zoneidx == ZONE_HIGHMEM) {
-			*gfp_mask |= __GFP_HIGHMEM;
-		}
-	}
-}
-#else
-void adjust_gfp_mask(gfp_t *unused)
-{
-}
-#endif
-
 void tune_lmk_param(int *other_free, int *other_file, struct shrink_control *sc)
 {
 	gfp_t gfp_mask;
@@ -210,8 +175,6 @@ void tune_lmk_param(int *other_free, int *other_file, struct shrink_control *sc)
 	int use_cma_pages;
 
 	gfp_mask = sc->gfp_mask;
-	adjust_gfp_mask(&gfp_mask);
-
 	zonelist = node_zonelist(0, gfp_mask);
 	high_zoneidx = gfp_zone(gfp_mask);
 	first_zones_zonelist(zonelist, high_zoneidx, NULL, &preferred_zone);
@@ -264,59 +227,7 @@ void tune_lmk_param(int *other_free, int *other_file, struct shrink_control *sc)
 		lowmem_print(4, "lowmem_shrink tunning for others ofree %d, "
 			     "%d\n", *other_free, *other_file);
 	}
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-	if (zone_watermark_ok(preferred_zone, 0,
-			  low_wmark_pages(preferred_zone), 0, 0)) {
-		struct sysinfo si;
-		si_swapinfo(&si);
-		*other_free += si.freeswap;
-#ifdef CONFIG_ZRAM
-		/* If swap is actually residing in RAM (e. g. the swap device
-		 * is a ZRAM device), we need to subtract the amount of RAM
-		 * that will be occupied by compressed data. To play on the
-		 * safe side, it's better to subtract too much than too few,
-		 * otherwise LMK may not be triggered when it has to be. ZRAM
-		 * compression ratio is at least 2, so we subtract half of the
-		 * reported freeswap.
-		 */
-		*other_free -= si.freeswap >> 1;
-#endif
-		lowmem_print(4,
-			"lowmem_shrink tunning for swap ofree %d, %d\n",
-			*other_free, *other_file);
-	}
-#endif
 }
-
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-static void lowmem_wakeup_kswapd(struct shrink_control *sc, int minfree)
-{
-	gfp_t gfp_mask;
-	struct zone *preferred_zone;
-	struct zonelist *zonelist;
-	enum zone_type high_zoneidx, classzone_idx;
-	int order = 0;
-
-	if (likely(current_is_kswapd()))
-		return;
-
-	gfp_mask = sc->gfp_mask;
-	adjust_gfp_mask(&gfp_mask);
-
-	zonelist = node_zonelist(0, gfp_mask);
-	high_zoneidx = gfp_zone(gfp_mask);
-	first_zones_zonelist(zonelist, high_zoneidx, NULL, &preferred_zone);
-	classzone_idx = zone_idx(preferred_zone);
-
-	for (minfree >>= 13; order < 7; order++) {
-		if (minfree <= (1 << order))
-			break;
-	}
-
-	lowmem_print(4, "lowmem_wakeup_kswapd order %d\n", order);
-	wakeup_kswapd(preferred_zone, order, classzone_idx);
-}
-#endif
 
 static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 {
@@ -326,9 +237,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int tasksize;
 	int i;
 	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-	int  max_minfree = 0;
-#endif
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
@@ -360,10 +268,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	if (lowmem_minfree_size < array_size)
 		array_size = lowmem_minfree_size;
 	for (i = 0; i < array_size; i++) {
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-		if (max_minfree < lowmem_minfree[i])
-			max_minfree = lowmem_minfree[i];
-#endif
 		if (other_free < lowmem_minfree[i] &&
 		    other_file < lowmem_minfree[i]) {
 			min_score_adj = lowmem_adj[i];
@@ -386,9 +290,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			mutex_unlock(&scan_mutex);
 
 		trace_lmk_remain_scan(rem, nr_to_scan, sc->gfp_mask);
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-		lowmem_wakeup_kswapd(sc, max_minfree);
-#endif
 		return rem;
 	}
 	selected_oom_score_adj = min_score_adj;
@@ -452,9 +353,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			     selected->pid, selected->comm,
 			     selected_oom_score_adj, selected_tasksize);
 		lowmem_deathpending_timeout = jiffies + HZ;
-#ifdef LMK_COUNT_INFO
-		lmk_count = (uint32_t)(lmk_count+1);
-#endif
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
@@ -582,9 +480,7 @@ module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
 			 S_IRUGO | S_IWUSR);
 module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
 module_param_named(lmk_fast_run, lmk_fast_run, int, S_IRUGO | S_IWUSR);
-#ifdef LMK_COUNT_INFO
-module_param_named(lmk_count, lmk_count, uint, S_IRUGO | S_IWUSR);
-#endif
+
 module_init(lowmem_init);
 module_exit(lowmem_exit);
 

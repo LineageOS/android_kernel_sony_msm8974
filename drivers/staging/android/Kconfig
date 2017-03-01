@@ -86,14 +86,6 @@ config ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
 
 source "drivers/staging/android/switch/Kconfig"
 
-config ANDROID_LOW_MEMORY_KILLER_CONSIDER_SWAP
-	bool "Android Low Memory Killer: consider swap free size"
-	depends on ANDROID_LOW_MEMORY_KILLER && SWAP
-	default n
-	---help---
-	  Use freeswap as otherfile when watermark is grater than
-	  low_watermark. This helps to make use of zram swap.
-
 config ANDROID_INTF_ALARM_DEV
 	bool "Android alarm driver"
 	depends on RTC_CLASS
