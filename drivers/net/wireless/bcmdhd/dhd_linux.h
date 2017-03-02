@@ -51,8 +51,9 @@
 #include <linux/wlan_plat.h>
 #endif
 
-#if !defined(CONFIG_WIFI_CONTROL_FUNC)
 #define WLAN_PLAT_NODFS_FLAG	0x01
+
+#if !defined(CONFIG_WIFI_CONTROL_FUNC)
 
 struct wifi_platform_data {
 	int (*set_power)(int val);
