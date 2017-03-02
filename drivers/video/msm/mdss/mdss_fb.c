@@ -679,7 +679,7 @@ static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_idle_time.attr,
 	&dev_attr_idle_notify.attr,
 	&dev_attr_msm_fb_panel_info.attr,
-	&dev_attr_rgb.attr;
+	&dev_attr_rgb.attr,
 	NULL,
 };
 
