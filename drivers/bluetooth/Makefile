@@ -35,3 +35,4 @@ obj-$(CONFIG_BT_MSM_SLEEP)              += msm_bt_sleep.o
 msm_bt_sleep-objs                       := bluesleep.o
 obj-$(CONFIG_MSM_BT_POWER)		+= bluetooth-power.o
 obj-$(CONFIG_BT_BCM4339)		+= bcm4339.o
+obj-y += broadcom/
