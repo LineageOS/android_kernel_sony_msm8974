@@ -60,4 +60,3 @@ struct max1187x_pdata {
 };
 
 #endif /* __MAX1187X_H */
-
