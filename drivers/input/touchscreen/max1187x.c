@@ -21,6 +21,9 @@
 #include <linux/crc16.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
+#ifdef CONFIG_FB
+#include <linux/fb.h>
+#endif
 #include <linux/firmware.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>
@@ -34,6 +37,9 @@
 #include <linux/jiffies.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#endif
 #include <linux/of.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
@@ -281,6 +287,11 @@ struct data {
 	struct input_dev *input_dev;
 	char phys[32];
 	struct device_node *evdt_node;
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+	struct work_struct notify_resume;
+	struct work_struct notify_suspend;
+#endif
 	bool is_suspended;
 	bool pm_suspended;
 	bool irq_on_suspend;
@@ -320,7 +331,6 @@ struct data {
 	u8 fw_update_mode;
 	u8 sysfs_created;
 	bool is_raw_mode;
-	int screen_status;
 
 	u16 button0:1;
 	u16 button1:1;
@@ -329,6 +339,13 @@ struct data {
 
 	unsigned long ew_timeout;
 };
+
+#ifdef CONFIG_FB
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data);
+static void notify_resume(struct work_struct *work);
+static void notify_suspend(struct work_struct *work);
+#endif
 
 static int vreg_configure(struct data *ts, bool enable);
 
@@ -353,8 +370,6 @@ static u16 max1187x_sqrt(u32 num);
 static int reset_power(struct data *ts);
 static int max1187x_set_glove_locked(struct data *ts, int enable);
 static int max1187x_set_glove(struct data *ts, int enable);
-static void set_resume_mode(struct data *ts);
-static void set_suspend_mode(struct data *ts);
 
 /* I2C communication */
 static int i2c_rx_bytes(struct data *ts, u8 *buf, u16 len)
@@ -1264,38 +1279,6 @@ static ssize_t command_store(struct device *dev, struct device_attribute *attr,
 	return ++count;
 }
 
-static ssize_t screen_status_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct data *ts = i2c_get_clientdata(client);
-
-	dev_info(&ts->client->dev, "%s: screen_status = %d\n", __func__,
-				ts->screen_status);
-	return snprintf(buf, PAGE_SIZE, "%d\n", ts->screen_status);
-}
-
-static ssize_t screen_status_store(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct data *ts = i2c_get_clientdata(client);
-
-	sscanf(buf, "%d", &ts->screen_status);
-	dev_dbg(&ts->client->dev, "%s: screen_status = %d\n", __func__,
-				ts->screen_status);
-
-	if (ts->screen_status) {
-		if (ts->is_suspended)
-			set_resume_mode(ts);
-	} else {
-		if (!ts->is_suspended)
-			set_suspend_mode(ts);
-	}
-
-	return count;
-}
-
 static ssize_t report_read(struct file *file, struct kobject *kobj,
 	struct bin_attribute *attr, char *buf, loff_t off, size_t count)
 {
@@ -1394,9 +1377,7 @@ static struct device_attribute dev_attrs[] = {
 	__ATTR(config_id, S_IRUGO, config_id_show, NULL),
 	__ATTR(driver_ver, S_IRUGO, driver_ver_show, NULL),
 	__ATTR(command, S_IWUSR, NULL, command_store),
-	__ATTR(glove, S_IRUGO | S_IWUSR, glove_show, glove_store),
-	__ATTR(screen_status, S_IRUGO | S_IWUSR, screen_status_show,
-						screen_status_store)
+	__ATTR(glove, S_IRUGO | S_IWUSR, glove_show, glove_store)
 };
 
 static struct bin_attribute dev_attr_report = {
@@ -2344,6 +2325,17 @@ static int probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (ret)
 		dev_warn(dev, "No firmware response (%d)", ret);
 
+	/* configure suspend/resume */
+#ifdef CONFIG_FB
+	ts->fb_notif.notifier_call = fb_notifier_callback;
+	ret = fb_register_client(&ts->fb_notif);
+	if (ret) {
+		dev_err(dev, "Unable to register fb_notifier");
+	} else {
+		INIT_WORK(&ts->notify_resume, notify_resume);
+		INIT_WORK(&ts->notify_suspend, notify_suspend);
+	}
+#endif
 	ts->is_suspended = false;
 	ts->pm_suspended = false;
 	ts->irq_on_suspend = false;
@@ -2375,6 +2367,9 @@ static int probe(struct i2c_client *client, const struct i2c_device_id *id)
 err_device_init_sysfs_remove_group:
 	remove_sysfs_entries(ts);
 err_device_init_irq:
+#ifdef CONFIG_FB
+	fb_unregister_client(&ts->fb_notif);
+#endif
 	input_unregister_device(ts->input_dev);
 err_device_init_inputdev:
 	max1187x_chip_init(ts, false);
@@ -2390,6 +2385,7 @@ err_device_init:
 
 static void shutdown(struct i2c_client *client)
 {
+	struct device *dev = &client->dev;
 	struct data *ts = i2c_get_clientdata(client);
 
 	if (ts == NULL)
@@ -2404,6 +2400,13 @@ static void shutdown(struct i2c_client *client)
 
 	if (ts->sysfs_created && ts->sysfs_created--)
 		device_remove_bin_file(&client->dev, &dev_attr_report);
+
+#ifdef CONFIG_FB
+	if (fb_unregister_client(&ts->fb_notif))
+		dev_err(dev, "Error occurred while unregistering fb_notifier.");
+	cancel_work_sync(&ts->notify_resume);
+	cancel_work_sync(&ts->notify_suspend);
+#endif
 
 	if (client->irq)
 		free_irq(client->irq, ts);
@@ -2639,6 +2642,49 @@ static void set_resume_mode(struct data *ts)
 
 	return;
 }
+
+#ifdef CONFIG_FB
+static void notify_resume(struct work_struct *work)
+{
+	struct data *ts  = container_of(work, struct data, notify_resume);
+
+	if (ts->is_suspended)
+		set_resume_mode(ts);
+}
+
+static void notify_suspend(struct work_struct *work)
+{
+	struct data *ts  = container_of(work, struct data, notify_suspend);
+
+	if (!ts->is_suspended)
+		set_suspend_mode(ts);
+}
+
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	struct data *ts = container_of(self, struct data, fb_notif);
+
+	if (evdata && evdata->data && event == FB_EVENT_BLANK && ts &&
+			ts->client) {
+		blank = evdata->data;
+		if (*blank != FB_BLANK_UNBLANK) {
+			dev_dbg(&ts->client->dev, "FB_BLANK_BLANKED\n");
+			cancel_work_sync(&ts->notify_resume);
+			cancel_work_sync(&ts->notify_suspend);
+			schedule_work(&ts->notify_suspend);
+		} else if (*blank == FB_BLANK_UNBLANK) {
+			dev_dbg(&ts->client->dev, "FB_BLANK_UNBLANK\n");
+			cancel_work_sync(&ts->notify_suspend);
+			cancel_work_sync(&ts->notify_resume);
+			schedule_work(&ts->notify_resume);
+		}
+	}
+	return 0;
+}
+#endif
 
 static int suspend_noirq(struct device *dev)
 {
