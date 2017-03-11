@@ -28,4 +28,7 @@
 
 extern void bcm_bt_lpm_exit_lpm_locked(struct uart_port *uport);
 
+extern void bcm_bt_lpm_exit_lpm(void);
+extern void bcm_bt_lpm_reset_timer(void);
+
 #endif /* __ASM_ARCH_BCM4339_BT_LPM_H  */

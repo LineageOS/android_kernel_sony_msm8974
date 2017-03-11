@@ -94,8 +94,6 @@ struct bcm_bt_lpm {
 	struct work_struct enter_lpm_work;
 } bt_lpm;
 
-static void bcm_bt_lpm_exit_lpm(void);
-
 static int bcm4339_bt_rfkill_set_power(void *data, bool blocked)
 {
 	int regOnGpio;

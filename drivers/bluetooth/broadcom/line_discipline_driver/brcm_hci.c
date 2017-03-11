@@ -47,6 +47,8 @@
 #include <linux/skbuff.h>
 #include <linux/serial_core.h>
 
+#include <mach/bcm4339_bt_lpm.h>
+
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>
 
@@ -88,10 +90,12 @@ extern struct sock *nl_sk_hcisnoop;
 extern int ldisc_snoop_enable_param;
 #endif
 
+/*
 #if CONFIG_SOMC_SHINANO_LPM
 extern void bcm_bt_lpm_exit_lpm(void);
 extern void bcm_bt_lpm_reset_timer(void);
 #endif
+*/
 
 /*****************************************************************************
 **  Constants & Macros
