@@ -329,7 +329,7 @@ static ssize_t brcm_bt_drv_read(struct file *f, char __user *buf, size_t
          if(copy_to_user(buf, skb->data, sizeof(char) * skb_size)){
             /* free the skb */
             /*kfree_skb(skb);*/
-            printk("copy to user failed\n");
+            pr_debug("copy to user failed\n");
             spin_unlock_irqrestore(&bt_dev_p->rx_q_lock, flags);
             return -EFAULT;
          }
