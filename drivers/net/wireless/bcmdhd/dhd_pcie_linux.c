@@ -66,7 +66,6 @@
 #define OSL_PKTTAG_CLEAR(p) \
 do { \
 	struct sk_buff *s = (struct sk_buff *)(p); \
-	ASSERT(OSL_PKTTAG_SZ == 32); \
 	*(uint32 *)(&s->cb[0]) = 0; *(uint32 *)(&s->cb[4]) = 0; \
 	*(uint32 *)(&s->cb[8]) = 0; *(uint32 *)(&s->cb[12]) = 0; \
 	*(uint32 *)(&s->cb[16]) = 0; *(uint32 *)(&s->cb[20]) = 0; \
@@ -199,6 +198,7 @@ static int dhdpcie_set_suspend_resume(struct pci_dev *pdev, bool state)
 
 		ret = dhdpcie_bus_suspend(bus, state);
 	}
+
 	DHD_INFO(("%s Exit with state :%d\n", __FUNCTION__, ret));
 	return ret;
 }
@@ -222,6 +222,7 @@ static int dhdpcie_suspend_dev(struct pci_dev *dev)
 {
 	int ret;
 	dhdpcie_info_t *pch = pci_get_drvdata(dev);
+	DHD_TRACE(("%s Enter\n", __FUNCTION__));
 	dhdpcie_pme_active(dev, TRUE);
 	pci_save_state(dev);
 	pch->state = pci_store_saved_state(dev);
@@ -232,6 +233,8 @@ static int dhdpcie_suspend_dev(struct pci_dev *dev)
 #ifdef CONFIG_PARTIALRESUME
 	wifi_process_partial_resume(pch->adapter, WIFI_PR_INIT);
 #endif
+	msm_pcie_pm_control(MSM_PCIE_SUSPEND, dev->bus->number, dev, NULL, 0);
+
 	return ret;
 }
 
@@ -264,6 +267,8 @@ static int dhdpcie_resume_dev(struct pci_dev *dev)
 {
 	int err = 0;
 	dhdpcie_info_t *pch = pci_get_drvdata(dev);
+	DHD_TRACE(("%s Enter\n", __FUNCTION__));
+	msm_pcie_pm_control(MSM_PCIE_RESUME, dev->bus->number, dev, NULL, 0);
 
 #ifdef DHD_WAKE_STATUS
 	if (check_wakeup_reason(pch->wake_irq)) {
@@ -375,6 +380,18 @@ dhdpcie_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	printf("PCI_PROBE:  bus %X, slot %X,vendor %X, device %X"
 		"(good PCI location)\n", pdev->bus->number,
 		PCI_SLOT(pdev->devfn), pdev->vendor, pdev->device);
+
+#if defined (BCMPCIE) && defined(CONFIG_WIFI_CONTROL_FUNC)
+	if (msm_pcie_pm_control(MSM_PCIE_RESUME, pdev->bus->number, pdev, NULL, 0)) {
+		DHD_ERROR(("%s Failed to resume PCIE link\n", __FUNCTION__));
+		return -ENODEV;
+	}
+
+	if (msm_pcie_recover_config(pdev)) {
+		DHD_ERROR(("%s Failed to recover PCIE config\n", __FUNCTION__));
+		return -ENODEV;
+	}
+#endif
 
 	if (dhdpcie_init (pdev)) {
 		DHD_ERROR(("%s: PCIe Enumeration failed\n", __FUNCTION__));
