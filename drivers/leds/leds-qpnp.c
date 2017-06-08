@@ -79,12 +79,7 @@
 
 #define WLED_SET_ILIM_CODE		0x01
 
-#ifndef CONFIG_MACH_SONY_SIRIUS
 #define WLED_MAX_LEVEL			LED_FULL
-#else
-#define WLED_MAX_LEVEL			4096
-#endif
-
 #define WLED_8_BIT_MASK			0xFF
 #define WLED_4_BIT_MASK			0x0F
 #define WLED_8_BIT_SHFT			0x08
