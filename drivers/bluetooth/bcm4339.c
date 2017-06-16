@@ -171,13 +171,18 @@ static void enter_lpm_work(struct work_struct *data)
 
 void bcm_bt_lpm_reset_timer(void)
 {
+#ifndef CONFIG_LINE_DISCIPLINE_DRIVER
 	mutex_lock(&bt_lpm.mutex);
+#endif
 
 	hrtimer_try_to_cancel(&bt_lpm.enter_lpm_timer);
 
 	hrtimer_start(&bt_lpm.enter_lpm_timer, bt_lpm.enter_lpm_delay,
 		HRTIMER_MODE_REL);
+
+#ifndef CONFIG_LINE_DISCIPLINE_DRIVER
 	mutex_unlock(&bt_lpm.mutex);
+#endif
 }
 EXPORT_SYMBOL(bcm_bt_lpm_reset_timer);
 
