@@ -61,7 +61,9 @@
 #include <mach/mpm.h>
 #include <mach/msm_bus.h>
 
+#ifdef CONFIG_MACH_SONY_SHINANO
 #include <mach/board-sony_shinano-wifi.h>
+#endif
 
 #include "msm_sdcc.h"
 #include "msm_sdcc_dml.h"
