@@ -343,8 +343,6 @@ enum {
 
 #define CHG_LLK_CHECK_PERIOD_MS 1000
 
-#define MAX_AGING_LEVEL		2
-
 struct somc_limit_charge {
 	int		enable_llk;
 	int		llk_socmax;
@@ -376,11 +374,10 @@ struct qpnp_somc_params {
 	struct wake_lock	chg_gone_wake_lock;
 	bool			enabling_regulator_boost;
 	bool			enable_shutdown_at_low_battery;
-	int			batt_aging;
-	int			aging_level_num;
-	unsigned int		aging_max_voltage_mv[MAX_AGING_LEVEL];
-	unsigned int		aging_warm_bat_mv[MAX_AGING_LEVEL];
-	unsigned int		aging_cool_bat_mv[MAX_AGING_LEVEL];
+	bool			batt_aging;
+ 	unsigned int		aging_max_voltage_mv;
+ 	unsigned int		aging_warm_bat_mv;
+ 	unsigned int		aging_cool_bat_mv;
 	unsigned int		aging_ibatmax_ma;
 	unsigned int		aging_warm_ibatmax_ma;
 	unsigned int		aging_cool_ibatmax_ma;
@@ -4650,7 +4647,7 @@ qpnp_chg_set_appropriate_battery_current(struct qpnp_chg_chip *chip)
 {
 	unsigned int chg_current = chip->max_bat_chg_current;
 
-	if (chip->somc_params.stepchg_mode)
+	if (!chip->somc_params.batt_aging && chip->somc_params.stepchg_mode)
 		chg_current = chip->somc_params.stepchg_ibatmax_ma_under_step;
 
 	if (!chip->somc_params.batt_id)
@@ -5636,24 +5633,19 @@ qpnp_chg_reduce_power_stage_callback(struct alarm *alarm)
 }
 
 static int
-qpnp_chg_set_aging_params(struct qpnp_chg_chip *chip, int level)
+qpnp_chg_set_aging_params(struct qpnp_chg_chip *chip)
 {
 	int ret = 0;
 
-	if (level <= 0 || level > chip->somc_params.aging_level_num) {
-		ret = -EINVAL;
-	} else if (chip->somc_params.aging_max_voltage_mv[level - 1] &&
-		chip->somc_params.aging_warm_bat_mv[level - 1] &&
-		chip->somc_params.aging_cool_bat_mv[level - 1] &&
+	if (chip->somc_params.aging_max_voltage_mv &&
+ 		chip->somc_params.aging_warm_bat_mv &&
+ 		chip->somc_params.aging_cool_bat_mv &&
 		chip->somc_params.aging_ibatmax_ma &&
 		chip->somc_params.aging_warm_ibatmax_ma &&
 		chip->somc_params.aging_cool_ibatmax_ma) {
-		chip->max_voltage_mv =
-			chip->somc_params.aging_max_voltage_mv[level - 1];
-		chip->warm_bat_mv =
-			chip->somc_params.aging_warm_bat_mv[level - 1];
-		chip->cool_bat_mv =
-			chip->somc_params.aging_cool_bat_mv[level - 1];
+		chip->max_voltage_mv = chip->somc_params.aging_max_voltage_mv;
+ 		chip->warm_bat_mv = chip->somc_params.aging_warm_bat_mv;
+ 		chip->cool_bat_mv = chip->somc_params.aging_cool_bat_mv;
 
 		chip->max_bat_chg_current = chip->somc_params.aging_ibatmax_ma;
 		chip->warm_bat_chg_ma = chip->somc_params.aging_warm_ibatmax_ma;
@@ -5768,11 +5760,13 @@ qpnp_batt_power_set_property(struct power_supply *psy,
 							(bool)val->intval;
 		break;
 	case POWER_SUPPLY_PROP_BATT_AGING:
-		rc = qpnp_chg_set_aging_params(chip, val->intval);
-		if (rc)
-			pr_debug("failed to set aging parameters\n");
-		else
-			chip->somc_params.batt_aging = val->intval;
+		if (val->intval && !chip->somc_params.batt_aging) {
+ 			rc = qpnp_chg_set_aging_params(chip);
+ 			if (rc)
+ 				pr_debug("failed to set aging parameters\n");
+ 			else
+ 				chip->somc_params.batt_aging = true;
+ 		}
 		break;
 	case POWER_SUPPLY_PROP_ENABLE_LLK:
 		chip->somc_params.limit_charge.enable_llk = (int)val->intval;
@@ -6795,14 +6789,8 @@ qpnp_charger_read_dt_props(struct qpnp_chg_chip *chip)
 			rc, 1);
 	OF_PROP_READ(chip, somc_params.maxinput_usb_mv, "maxinput-usb-mv",
 			rc, 1);
-	OF_PROP_READ(chip, somc_params.aging_max_voltage_mv[0],
+	OF_PROP_READ(chip, somc_params.aging_max_voltage_mv,
 			"aging-vddmax-mv", rc, 1);
-	if (chip->somc_params.aging_max_voltage_mv[0])
-		chip->somc_params.aging_level_num++;
-	OF_PROP_READ(chip, somc_params.aging_max_voltage_mv[1],
-			"aging-vddmax-mv-l2", rc, 1);
-	if (chip->somc_params.aging_max_voltage_mv[1])
-		chip->somc_params.aging_level_num++;
 	OF_PROP_READ(chip, somc_params.aging_ibatmax_ma,
 			"aging-ibatmax-ma", rc, 1);
 
@@ -6837,14 +6825,10 @@ qpnp_charger_read_dt_props(struct qpnp_chg_chip *chip)
 		OF_PROP_READ(chip, cool_bat_chg_ma, "ibatmax-cool-ma", rc, 1);
 		OF_PROP_READ(chip, warm_bat_mv, "warm-bat-mv", rc, 1);
 		OF_PROP_READ(chip, cool_bat_mv, "cool-bat-mv", rc, 1);
-		OF_PROP_READ(chip, somc_params.aging_warm_bat_mv[0],
+		OF_PROP_READ(chip, somc_params.aging_warm_bat_mv,
 			"aging-warm-bat-mv", rc, 1);
-		OF_PROP_READ(chip, somc_params.aging_cool_bat_mv[0],
+		OF_PROP_READ(chip, somc_params.aging_cool_bat_mv,
 			"aging-cool-bat-mv", rc, 1);
-		OF_PROP_READ(chip, somc_params.aging_warm_bat_mv[1],
-			"aging-warm-bat-mv-l2", rc, 1);
-		OF_PROP_READ(chip, somc_params.aging_cool_bat_mv[1],
-			"aging-cool-bat-mv-l2", rc, 1);
 		OF_PROP_READ(chip, somc_params.aging_warm_ibatmax_ma,
 			"aging-warm-ibatmax-ma", rc, 1);
 		OF_PROP_READ(chip, somc_params.aging_cool_ibatmax_ma,

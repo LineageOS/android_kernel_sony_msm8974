@@ -111,12 +111,6 @@ struct bms_battery_data oem_batt_data = {
 	.rbatt_sf_lut		= &rbatt_sf,
 	.default_rbatt_mohm	= 100,
 	.flat_ocv_threshold_uv	= 3800000,
-	.aging_fcc			= 3090,
-	.aging_fcc_temp_lut		= &fcc_temp,
-	.aging_pc_temp_ocv_lut		= &pc_temp_ocv,
-	.aging_rbatt_sf_lut		= &rbatt_sf,
-	.aging_default_rbatt_mohm	= 100,
-	.aging_flat_ocv_threshold_uv	= 3800000,
 };
 
 struct bms_battery_data *bms_batt_data = &oem_batt_data;

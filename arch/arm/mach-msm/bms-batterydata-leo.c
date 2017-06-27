@@ -206,12 +206,6 @@ struct bms_battery_data oem_batt_data_somc[BATT_VENDOR_NUM] = {
 		.r_sense_uohm		= 10000,
 		.ocv_high_threshold_uv	= 3810000,
 		.ocv_low_threshold_uv	= 3740000,
-		.aging_fcc			= 3140,
-		.aging_fcc_temp_lut		= &fcc_temp,
-		.aging_pc_temp_ocv_lut		= &pc_temp_ocv,
-		.aging_rbatt_sf_lut		= &rbatt_sf,
-		.aging_default_rbatt_mohm	= 100,
-		.aging_flat_ocv_threshold_uv	= 3800000,
 	},
 	/* BATT_VENDOR_SANYO */
 	{
@@ -227,12 +221,6 @@ struct bms_battery_data oem_batt_data_somc[BATT_VENDOR_NUM] = {
 		.r_sense_uohm		= 10000,
 		.ocv_high_threshold_uv	= 3810000,
 		.ocv_low_threshold_uv	= 3740000,
-		.aging_fcc			= 3090,
-		.aging_fcc_temp_lut		= &fcc_temp,
-		.aging_pc_temp_ocv_lut		= &pc_temp_ocv,
-		.aging_rbatt_sf_lut		= &rbatt_sf,
-		.aging_default_rbatt_mohm	= 100,
-		.aging_flat_ocv_threshold_uv	= 3800000,
 	},
 	/* BATT_VENDOR_5TH */
 	{
