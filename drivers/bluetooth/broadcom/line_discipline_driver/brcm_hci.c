@@ -90,13 +90,6 @@ extern struct sock *nl_sk_hcisnoop;
 extern int ldisc_snoop_enable_param;
 #endif
 
-/*
-#if CONFIG_SOMC_SHINANO_LPM
-extern void bcm_bt_lpm_exit_lpm(void);
-extern void bcm_bt_lpm_reset_timer(void);
-#endif
-*/
-
 /*****************************************************************************
 **  Constants & Macros
 *****************************************************************************/
