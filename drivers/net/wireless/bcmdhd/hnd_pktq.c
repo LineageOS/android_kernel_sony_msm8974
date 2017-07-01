@@ -38,9 +38,11 @@ pktq_penq(struct pktq *pq, int prec, void *p)
 {
 	struct pktq_prec *q;
 
-	DHD_WARN(prec >= 0 && prec < pq->num_prec, return NULL;);
-	/* queueing chains not allowed */
-	DHD_WARN(!((PKTLINK(p) != NULL) && (PKTLINK(p) != p)), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
+    	/* queueing chains not allowed */
+	ASSERT(!((PKTLINK(p) != NULL) && (PKTLINK(p) != p)));
+	ASSERT(!pktq_full(pq));
+	ASSERT(!pktq_pfull(pq, prec));
 	PKTSETLINK(p, NULL);
 
 	q = &pq->q[prec];
@@ -66,9 +68,11 @@ pktq_penq_head(struct pktq *pq, int prec, void *p)
 {
 	struct pktq_prec *q;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 	/* queueing chains not allowed */
-	DHD_WARN(!((PKTLINK(p) != NULL) && (PKTLINK(p) != p)), return NULL;);
+	ASSERT(!((PKTLINK(p) != NULL) && (PKTLINK(p) != p)));
+	ASSERT(!pktq_full(pq));
+	ASSERT(!pktq_pfull(pq, prec));
 	PKTSETLINK(p, NULL);
 	q = &pq->q[prec];
 
@@ -102,8 +106,11 @@ pktq_append(struct pktq *pq, int prec, struct spktq *list)
 	if (list_q->head == NULL)
 		return;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return;);
-	DHD_WARN(PKTLINK(list_q->tail) == NULL, return;);         /* terminated list */
+	ASSERT(prec >= 0 && prec < pq->num_prec);
+	ASSERT(PKTLINK(list_q->tail) == NULL);         /* terminated list */
+
+	ASSERT(!pktq_full(pq));
+	ASSERT(!pktq_pfull(pq, prec));
 
 	q = &pq->q[prec];
 
@@ -140,8 +147,11 @@ pktq_prepend(struct pktq *pq, int prec, struct spktq *list)
 	if (list_q->head == NULL)
 		return;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return;);
-	DHD_WARN(PKTLINK(list_q->tail) == NULL, return;);         /* terminated list */
+	ASSERT(prec >= 0 && prec < pq->num_prec);
+	ASSERT(PKTLINK(list_q->tail) == NULL);         /* terminated list */
+
+	ASSERT(!pktq_full(pq));
+	ASSERT(!pktq_pfull(pq, prec));
 
 	q = &pq->q[prec];
 
@@ -175,7 +185,7 @@ pktq_pdeq(struct pktq *pq, int prec)
 	struct pktq_prec *q;
 	void *p;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	q = &pq->q[prec];
 
@@ -200,7 +210,7 @@ pktq_pdeq_prev(struct pktq *pq, int prec, void *prev_p)
 	struct pktq_prec *q;
 	void *p;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	q = &pq->q[prec];
 
@@ -226,7 +236,7 @@ pktq_pdeq_with_fn(struct pktq *pq, int prec, ifpkt_cb_t fn, int arg)
 	struct pktq_prec *q;
 	void *p, *prev = NULL;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	q = &pq->q[prec];
 	p = q->head;
@@ -268,7 +278,7 @@ pktq_pdeq_tail(struct pktq *pq, int prec)
 	struct pktq_prec *q;
 	void *p, *prev;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return NULL;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	q = &pq->q[prec];
 
@@ -318,7 +328,7 @@ pktq_pflush(osl_t *osh, struct pktq *pq, int prec, bool dir, ifpkt_cb_t fn, int 
 	}
 
 	if (q->head == NULL) {
-		DHD_BUG(q->len);
+		ASSERT(q->len == 0);
 		q->tail = NULL;
 	}
 }
@@ -329,7 +339,7 @@ pktq_pdel(struct pktq *pq, void *pktbuf, int prec)
 	struct pktq_prec *q;
 	void *p;
 
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return FALSE;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	/* Should this just assert pktbuf? */
 	if (!pktbuf)
@@ -362,7 +372,7 @@ pktq_init(struct pktq *pq, int num_prec, int max_len)
 {
 	int prec;
 
-	DHD_WARN((num_prec > 0) && (num_prec <= PKTQ_MAX_PREC), return;);
+	ASSERT(num_prec > 0 && num_prec <= PKTQ_MAX_PREC);
 
 	/* pq is variable size; only zero out what's requested */
 	bzero(pq, OFFSETOF(struct pktq, q) + (sizeof(struct pktq_prec) * num_prec));
@@ -378,7 +388,7 @@ pktq_init(struct pktq *pq, int num_prec, int max_len)
 void
 pktq_set_max_plen(struct pktq *pq, int prec, int max_len)
 {
-	DHD_WARN((prec >= 0) && (prec < pq->num_prec), return;);
+	ASSERT(prec >= 0 && prec < pq->num_prec);
 
 	if (prec < pq->num_prec)
 		pq->q[prec].max = (uint16)max_len;
@@ -507,7 +517,7 @@ pktq_flush(osl_t *osh, struct pktq *pq, bool dir, ifpkt_cb_t fn, int arg)
 	for (prec = 0; prec < pq->num_prec; prec++)
 		pktq_pflush(osh, pq, prec, dir, fn, arg);
 	if (fn == NULL)
-		DHD_WARN(pq->len == 0,);
+		ASSERT(pq->len == 0);
 }
 
 /* Return sum of lengths of a specific set of precedences */

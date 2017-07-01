@@ -117,19 +117,19 @@ bcmsdh_iovar_op(void *sdh, const char *name,
 	return sdioh_iovar_op(bcmsdh->sdioh, name, params, plen, arg, len, set);
 }
 
-int
+bool
 bcmsdh_intr_query(void *sdh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
 	bool on;
 
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
+	ASSERT(bcmsdh);
 	status = sdioh_interrupt_query(bcmsdh->sdioh, &on);
 	if (SDIOH_API_SUCCESS(status))
-		return 0;
+		return FALSE;
 	else
-		return (int)on;
+		return on;
 }
 
 int
@@ -137,7 +137,7 @@ bcmsdh_intr_enable(void *sdh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
+	ASSERT(bcmsdh);
 
 	status = sdioh_interrupt_set(bcmsdh->sdioh, TRUE);
 	return (SDIOH_API_SUCCESS(status) ? 0 : BCME_ERROR);
@@ -148,7 +148,7 @@ bcmsdh_intr_disable(void *sdh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
+	ASSERT(bcmsdh);
 
 	status = sdioh_interrupt_set(bcmsdh->sdioh, FALSE);
 	return (SDIOH_API_SUCCESS(status) ? 0 : BCME_ERROR);
@@ -159,7 +159,7 @@ bcmsdh_intr_reg(void *sdh, bcmsdh_cb_fn_t fn, void *argh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
+	ASSERT(bcmsdh);
 
 	status = sdioh_interrupt_register(bcmsdh->sdioh, fn, argh);
 	return (SDIOH_API_SUCCESS(status) ? 0 : BCME_ERROR);
@@ -170,20 +170,20 @@ bcmsdh_intr_dereg(void *sdh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
+	ASSERT(bcmsdh);
 
 	status = sdioh_interrupt_deregister(bcmsdh->sdioh);
 	return (SDIOH_API_SUCCESS(status) ? 0 : BCME_ERROR);
 }
 
 #if defined(DHD_DEBUG)
-int
+bool
 bcmsdh_intr_pending(void *sdh)
 {
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 
-	DHD_WARN(sdh, return BCME_ERROR;);
-	return (int)sdioh_interrupt_pending(bcmsdh->sdioh);
+	ASSERT(sdh);
+	return sdioh_interrupt_pending(bcmsdh->sdioh);
 }
 #endif
 
@@ -191,7 +191,8 @@ bcmsdh_intr_pending(void *sdh)
 int
 bcmsdh_devremove_reg(void *sdh, bcmsdh_cb_fn_t fn, void *argh)
 {
-	DHD_BUG(!sdh);
+	ASSERT(sdh);
+
 	/* don't support yet */
 	return BCME_UNSUPPORTED;
 }
@@ -217,7 +218,7 @@ bcmsdh_cfg_read(void *sdh, uint fnc_num, uint32 addr, int *err)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh->init_success);
 
 #ifdef SDIOH_API_ACCESS_RETRY_LIMIT
 	do {
@@ -249,7 +250,7 @@ bcmsdh_cfg_write(void *sdh, uint fnc_num, uint32 addr, uint8 data, int *err)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return;);
+	ASSERT(bcmsdh->init_success);
 
 #ifdef SDIOH_API_ACCESS_RETRY_LIMIT
 	do {
@@ -277,7 +278,7 @@ bcmsdh_cfg_read_word(void *sdh, uint fnc_num, uint32 addr, int *err)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh->init_success);
 
 	status = sdioh_request_word(bcmsdh->sdioh, SDIOH_CMD_TYPE_NORMAL, SDIOH_READ, fnc_num,
 	                            addr, &data, 4);
@@ -300,7 +301,7 @@ bcmsdh_cfg_write_word(void *sdh, uint fnc_num, uint32 addr, uint32 data, int *er
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return;);
+	ASSERT(bcmsdh->init_success);
 
 	status = sdioh_request_word(bcmsdh->sdioh, SDIOH_CMD_TYPE_NORMAL, SDIOH_WRITE, fnc_num,
 	                            addr, &data, 4);
@@ -327,9 +328,9 @@ bcmsdh_cis_read(void *sdh, uint func, uint8 *cis, uint length)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
-	DHD_WARN(cis, return BCME_ERROR;);
-	DHD_WARN(length <= SBSDIO_CIS_SIZE_LIMIT, return BCME_ERROR;);
+	ASSERT(bcmsdh->init_success);
+	ASSERT(cis);
+	ASSERT(length <= SBSDIO_CIS_SIZE_LIMIT);
 
 	status = sdioh_cis_read(bcmsdh->sdioh, func, cis, length);
 
@@ -393,7 +394,7 @@ bcmsdh_reg_read(void *sdh, uint32 addr, uint size)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh->init_success);
 
 	if (bcmsdhsdio_set_sbaddr_window(bcmsdh, addr, FALSE))
 		return 0xFFFFFFFF;
@@ -442,7 +443,7 @@ bcmsdh_reg_write(void *sdh, uint32 addr, uint size, uint32 data)
 	if (!bcmsdh)
 		bcmsdh = l_bcmsdh;
 
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh->init_success);
 
 	if ((err = bcmsdhsdio_set_sbaddr_window(bcmsdh, addr, FALSE)))
 		return err;
@@ -479,14 +480,14 @@ bcmsdh_recv_buf(void *sdh, uint32 addr, uint fn, uint flags,
 	uint width;
 	int err = 0;
 
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh);
+	ASSERT(bcmsdh->init_success);
 
 	BCMSDH_INFO(("%s:fun = %d, addr = 0x%x, size = %d\n",
 	             __FUNCTION__, fn, addr, nbytes));
 
 	/* Async not implemented yet */
-	DHD_WARN(!(flags & SDIO_REQ_ASYNC),);
+	ASSERT(!(flags & SDIO_REQ_ASYNC));
 	if (flags & SDIO_REQ_ASYNC)
 		return BCME_UNSUPPORTED;
 
@@ -517,13 +518,14 @@ bcmsdh_send_buf(void *sdh, uint32 addr, uint fn, uint flags,
 	uint width;
 	int err = 0;
 
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
+	ASSERT(bcmsdh);
+	ASSERT(bcmsdh->init_success);
 
 	BCMSDH_INFO(("%s:fun = %d, addr = 0x%x, size = %d\n",
 	            __FUNCTION__, fn, addr, nbytes));
 
 	/* Async not implemented yet */
+	ASSERT(!(flags & SDIO_REQ_ASYNC));
 	if (flags & SDIO_REQ_ASYNC)
 		return BCME_UNSUPPORTED;
 
@@ -549,9 +551,9 @@ bcmsdh_rwdata(void *sdh, uint rw, uint32 addr, uint8 *buf, uint nbytes)
 	bcmsdh_info_t *bcmsdh = (bcmsdh_info_t *)sdh;
 	SDIOH_API_RC status;
 
-	DHD_WARN(bcmsdh, return BCME_ERROR;);
-	DHD_WARN(bcmsdh->init_success, return BCME_ERROR;);
-	DHD_WARN((addr & SBSDIO_SBWINDOW_MASK) == 0, return BCME_ERROR;);
+	ASSERT(bcmsdh);
+	ASSERT(bcmsdh->init_success);
+	ASSERT((addr & SBSDIO_SBWINDOW_MASK) == 0);
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
@@ -625,7 +627,7 @@ bcmsdh_reset(bcmsdh_info_t *sdh)
 
 void *bcmsdh_get_sdioh(bcmsdh_info_t *sdh)
 {
-	DHD_WARN(sdh, return NULL;);
+	ASSERT(sdh);
 	return sdh->sdioh;
 }
 

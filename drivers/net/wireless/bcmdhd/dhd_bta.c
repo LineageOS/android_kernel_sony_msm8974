@@ -309,8 +309,8 @@ dhd_bta_doevt(dhd_pub_t *dhdp, void *data_buf, uint data_len)
 {
 	amp_hci_event_t *evt = (amp_hci_event_t *)data_buf;
 
-	if((dhdp == NULL) || (evt == NULL))
-		return;
+	ASSERT(dhdp);
+	ASSERT(evt);
 
 	switch (evt->ecode) {
 	case HCI_Command_Complete: {
