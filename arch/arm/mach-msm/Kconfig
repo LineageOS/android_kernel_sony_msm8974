@@ -1146,8 +1146,8 @@ config MACH_SONY_SHINANO
 	depends on ARCH_MSM8974
 	bool "Sony Mobile Shinano"
 	help
-	  Support for the SONY Mobile Rhine board.
-	  It is based on QCOM MSM8974 AB chipset.
+	  Support for the SONY Mobile Shinano board.
+	  It is based on QCOM MSM8974 AB/AC chipset.
 
 config MACH_SONY_SIRIUS
 	depends on ARCH_MSM8974
