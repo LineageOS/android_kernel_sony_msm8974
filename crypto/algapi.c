@@ -342,7 +342,7 @@ static void crypto_wait_for_test(struct crypto_larval *larval)
 		crypto_alg_tested(larval->alg.cra_driver_name, 0);
 	}
 
-	err = wait_for_completion_interruptible(&larval->completion);
+	err = wait_for_completion_killable(&larval->completion);
 	WARN_ON(err);
 
 out:
@@ -512,7 +512,15 @@ static struct crypto_template *__crypto_lookup_template(const char *name)
 
 struct crypto_template *crypto_lookup_template(const char *name)
 {
-	return try_then_request_module(__crypto_lookup_template(name), name);
+#ifdef CONFIG_CRYPTO_FIPS
+	if (unlikely(in_fips_err())) {
+		printk(KERN_ERR
+			"crypto_lookup failed due to FIPS error: %s", name);
+		return ERR_PTR(-EACCES);
+	}
+#endif
+	return try_then_request_module(__crypto_lookup_template(name), "%s",
+				       name);
 }
 EXPORT_SYMBOL_GPL(crypto_lookup_template);
 
