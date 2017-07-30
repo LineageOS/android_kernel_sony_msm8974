@@ -138,6 +138,7 @@ static inline unsigned long zone_page_state_snapshot(struct zone *zone,
 #endif
 	return x;
 }
+extern unsigned long global_reclaimable_pages(void);
 
 extern unsigned long global_reclaimable_pages(void);
 
