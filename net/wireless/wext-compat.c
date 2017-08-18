@@ -789,6 +789,7 @@ static int cfg80211_wext_siwfreq(struct net_device *dev,
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct cfg80211_registered_device *rdev = wiphy_to_dev(wdev->wiphy);
 	int freq, err;
+	enum nl80211_chan_width chan_width = NL80211_CHAN_WIDTH_20_NOHT;
 
 	switch (wdev->iftype) {
 	case NL80211_IFTYPE_STATION:
@@ -805,7 +806,8 @@ static int cfg80211_wext_siwfreq(struct net_device *dev,
 			return -EINVAL;
 		mutex_lock(&rdev->devlist_mtx);
 		wdev_lock(wdev);
-		err = cfg80211_set_freq(rdev, wdev, freq, NL80211_CHAN_NO_HT);
+		err = cfg80211_set_freq(
+			rdev, wdev, freq, NL80211_CHAN_NO_HT, chan_width);
 		wdev_unlock(wdev);
 		mutex_unlock(&rdev->devlist_mtx);
 		return err;

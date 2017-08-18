@@ -1,4 +1,5 @@
-/* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2015 Sony Mobile Communications Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,6 +11,9 @@
  * GNU General Public License for more details.
  */
 #include <linux/io.h>
+#if defined(CONFIG_SONY_CAM_V4L2)
+#include <linux/ratelimit.h>
+#endif
 #include <media/v4l2-subdev.h>
 #include <asm/div64.h>
 #include "msm_isp_util.h"
@@ -28,11 +32,15 @@ int msm_isp_axi_create_stream(
 	struct msm_vfe_axi_shared_data *axi_data,
 	struct msm_vfe_axi_stream_request_cmd *stream_cfg_cmd)
 {
-	uint32_t i = stream_cfg_cmd->stream_src;
-	if (i >= VFE_AXI_SRC_MAX) {
-		pr_err("%s:%d invalid stream_src %d\n", __func__, __LINE__,
-			stream_cfg_cmd->stream_src);
-		return -EINVAL;
+	int i, rc = -1;
+	for (i = 0; i < MAX_NUM_STREAM; i++) {
+		if (axi_data->stream_info[i].state == AVALIABLE)
+			break;
+	}
+
+	if (i == MAX_NUM_STREAM) {
+		pr_err("%s: No free stream\n", __func__);
+		return rc;
 	}
 
 	if ((axi_data->stream_handle_cnt << 8) == 0)
@@ -218,8 +226,13 @@ static uint32_t msm_isp_axi_get_plane_size(
 			size = plane_cfg[plane_idx].output_height *
 				plane_cfg[plane_idx].output_width;
 		else
+#if defined(CONFIG_SONY_CAM_V4L2)
+			size = plane_cfg[plane_idx].output_height *
+				plane_cfg[plane_idx].output_width / 2;
+#else
 			size = plane_cfg[plane_idx].output_height *
 				plane_cfg[plane_idx].output_width;
+#endif
 		break;
 	case V4L2_PIX_FMT_NV14:
 	case V4L2_PIX_FMT_NV41:
@@ -752,6 +765,12 @@ void msm_isp_axi_stream_update(struct vfe_device *vfe_dev)
 			axi_data->stream_info[i].state =
 				axi_data->stream_info[i].state ==
 				START_PENDING ? STARTING : STOPPING;
+#if defined(CONFIG_SONY_CAM_V4L2)
+			if (axi_data->stream_info[i].state == STOPPING) {
+				axi_data->stream_info[i].state = INACTIVE;
+				vfe_dev->axi_data.stream_update = 1;
+			}
+#endif
 		} else if (axi_data->stream_info[i].state == STARTING ||
 			axi_data->stream_info[i].state == STOPPING) {
 			axi_data->stream_info[i].state =
@@ -874,8 +893,13 @@ static int msm_isp_cfg_ping_pong_address(struct vfe_device *vfe_dev,
 		frame_id = vfe_dev->axi_data.src_info[src_intf].frame_id;
 
 	if (frame_id && (stream_info->frame_id >= frame_id)) {
+#if defined(CONFIG_SONY_CAM_V4L2)
+		pr_err_ratelimited("%s: duplicate frame_id, Session frm id %d cur frm id %d\n",
+		__func__, frame_id, stream_info->frame_id);
+#else
 		pr_err("%s: duplicate frame_id, Session frm id %d cur frm id %d\n",
 		__func__, frame_id, stream_info->frame_id);
+#endif
 		vfe_dev->error_info.stream_framedrop_count[stream_idx]++;
 		return rc;
 	}
@@ -1199,11 +1223,20 @@ static int msm_isp_axi_wait_for_cfg_done(struct vfe_device *vfe_dev,
 	vfe_dev->axi_data.pipeline_update = camif_update;
 	vfe_dev->axi_data.stream_update = 2;
 	spin_unlock_irqrestore(&vfe_dev->shared_data_lock, flags);
+#if defined(CONFIG_SONY_CAM_V4L2)
+	rc = wait_for_completion_interruptible_timeout(
+		&vfe_dev->stream_config_complete,
+		msecs_to_jiffies(vfe_dev->timeout));
+#else
 	rc = wait_for_completion_timeout(
 		&vfe_dev->stream_config_complete,
 		msecs_to_jiffies(VFE_MAX_CFG_TIMEOUT));
+#endif
 	if (rc == 0) {
 		pr_err("%s: wait timeout\n", __func__);
+#if defined(CONFIG_SONY_CAM_V4L2)
+		vfe_dev->timeout = 100;
+#endif
 		rc = -1;
 	} else {
 		rc = 0;

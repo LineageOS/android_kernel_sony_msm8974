@@ -1206,7 +1206,7 @@ static int __devinit krait_power_probe(struct platform_device *pdev)
 	int headroom_uV, retention_uV, ldo_default_uV, ldo_threshold_uV;
 	int ldo_delta_uV;
 	int cpu_num;
-	bool ldo_disable = false;
+	bool ldo_disable = true;
 
 	if (pdev->dev.of_node) {
 		/* Get init_data from device tree. */

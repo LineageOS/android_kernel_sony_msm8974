@@ -822,7 +822,7 @@ kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 			    size_t size)
 {
 	size = PAGE_ALIGN(size);
-	if (size == 0)
+	if (size == 0 || size > UINT_MAX)
 		return -EINVAL;
 
 	return _kgsl_sharedmem_page_alloc(memdesc, pagetable, size);

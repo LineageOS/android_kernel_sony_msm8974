@@ -19,6 +19,10 @@
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ *  Contains pick of 24261fc23db950951760d00c188ba63cc756b932
+ *  from future version of this file, with
+ *  Copyright (C) International Business Machines  Corp., 2002,2010
  */
 
 /* Note that BB means BUGBUG (ie something to fix eventually) */
@@ -86,7 +90,6 @@ extern mempool_t *cifs_req_poolp;
 extern mempool_t *cifs_mid_poolp;
 
 struct workqueue_struct	*cifsiod_wq;
-
 /*
  * Bumps refcount for cifs super block.
  * Note that it should be only called if a referece to VFS super block is

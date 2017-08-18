@@ -80,7 +80,8 @@ EXPORT_SYMBOL(cfg80211_can_beacon_sec_chan);
 
 int cfg80211_set_freq(struct cfg80211_registered_device *rdev,
 		      struct wireless_dev *wdev, int freq,
-		      enum nl80211_channel_type channel_type)
+		      enum nl80211_channel_type channel_type,
+		      enum nl80211_chan_width chan_width)
 {
 	struct ieee80211_channel *chan;
 	int result;
@@ -126,7 +127,7 @@ int cfg80211_set_freq(struct cfg80211_registered_device *rdev,
 
 	result = rdev->ops->set_channel(&rdev->wiphy,
 					wdev ? wdev->netdev : NULL,
-					chan, channel_type);
+					chan, chan_width);
 	if (result)
 		return result;
 

@@ -2,6 +2,7 @@
  *  linux/kernel/printk.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
+ *  Copyright (c) 2014 Sony Mobile Communications Inc.
  *
  * Modified to make sys_syslog() more flexible: added commands to
  * return the last 4k of kernel messages, regardless of whether

@@ -7,6 +7,8 @@
  * use a transport-specific userspace libhid/libusb libraries.
  *
  *  Copyright (c) 2007 Jiri Kosina
+ *  Copyright 2011,2012 Sony Corporation
+ *  Copyright (c) 2012 Sony Mobile Communications AB.
  */
 
 /*
@@ -216,6 +218,22 @@ static ssize_t hidraw_get_report(struct file *file, char __user *buffer, size_t 
 		goto out_free;
 	}
 
+#ifdef CONFIG_HID_SONY_PS3_CTRL_BT
+	if (report_type == HID_FEATREP_WDATASIZE) {
+		if (count < 3) {
+			printk(KERN_WARNING "hidraw: pid %d passed too short report\n",
+					task_pid_nr(current));
+			ret = -EINVAL;
+			goto out_free;
+		}
+
+		if (copy_from_user(buf, buffer, 3)) {
+			ret = -EFAULT;
+			goto out_free;
+		}
+	}
+#endif
+
 	ret = dev->hid_get_raw_report(dev, report_number, buf, count, report_type);
 
 	if (ret < 0)
@@ -397,6 +415,47 @@ static long hidraw_ioctl(struct file *file, unsigned int cmd,
 					break;
 				}
 
+#ifdef CONFIG_HID_SONY_PS3_CTRL_BT
+				if (_IOC_NR(cmd)
+					== _IOC_NR(HIDIOCSF_SKIPREPID(0))) {
+					int len = _IOC_SIZE(cmd);
+					if (dev->hid->bus != BUS_USB) {
+						ret = -EINVAL;
+						break;
+					}
+
+					ret = hidraw_send_report(file, user_arg,
+						len, HID_FEATREP_SKIPREPID);
+					break;
+				}
+
+				if (_IOC_NR(cmd)
+					== _IOC_NR(HIDIOCSO_SKIPREPID(0))) {
+					int len = _IOC_SIZE(cmd);
+					if (dev->hid->bus != BUS_USB) {
+						ret = -EINVAL;
+						break;
+					}
+
+					ret = hidraw_send_report(file, user_arg,
+						len, HID_OUTREP_SKIPREPID);
+					break;
+				}
+
+				if (_IOC_NR(cmd)
+					== _IOC_NR(HIDIOCGF_WDATASIZE(0))) {
+					int len = _IOC_SIZE(cmd);
+					if (dev->hid->bus != BUS_BLUETOOTH) {
+						ret = -EINVAL;
+						break;
+					}
+
+					ret = hidraw_get_report(file, user_arg,
+						len, HID_FEATREP_WDATASIZE);
+					break;
+				}
+#endif
+
 				/* Begin Read-only ioctls. */
 				if (_IOC_DIR(cmd) != _IOC_READ) {
 					ret = -EINVAL;
@@ -459,6 +518,12 @@ int hidraw_report_event(struct hid_device *hid, u8 *data, int len)
 			ret = -ENOMEM;
 			break;
 		}
+#ifdef CONFIG_HID_SONY_PS3_CTRL_BT
+		if (list < (struct hidraw_list *)PAGE_OFFSET
+				|| !(list->node.next))
+			break;
+#endif
+		list->buffer[list->head].value = kmemdup(data, len, GFP_ATOMIC);
 		list->buffer[list->head].len = len;
 		list->head = new_head;
 		kill_fasync(&list->fasync, SIGIO, POLL_IN);

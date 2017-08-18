@@ -20,6 +20,10 @@
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ *  Contains pick of 24261fc23db950951760d00c188ba63cc756b932
+ *  from future version of this file, with
+ *  Copyright (C) International Business Machines  Corp., 2002,2010
  */
 #include <linux/fs.h>
 #include <linux/backing-dev.h>
@@ -264,7 +268,6 @@ cifs_new_fileinfo(__u16 fileHandle, struct file *file,
 	pCifsFile->tlink = cifs_get_tlink(tlink);
 	mutex_init(&pCifsFile->fh_mutex);
 	INIT_WORK(&pCifsFile->oplock_break, cifs_oplock_break);
-
 	cifs_sb_active(inode->i_sb);
 
 	spin_lock(&cifs_file_list_lock);
