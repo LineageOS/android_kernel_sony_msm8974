@@ -47,7 +47,7 @@
 #include <linux/skbuff.h>
 #include <linux/serial_core.h>
 
-#ifdef CONFIG_MACH_SONY_SHINANO
+#ifdef CONFIG_BT_BCM4339
 #include <mach/bcm4339_bt_lpm.h>
 #endif
 
@@ -347,7 +347,7 @@ static int brcm_enqueue(struct hci_uart *hu, struct sk_buff *skb)
     struct brcm_struct *brcm = hu->priv;
     unsigned long lock_flags;
     BRCM_HCI_DBG(V4L2_DBG_TX, "hu %p skb %p", hu, skb);
-#ifdef CONFIG_MACH_SONY_SHINANO
+#ifdef CONFIG_BT_BCM4339
     bcm_bt_lpm_exit_lpm();
 #endif
     spin_lock_irqsave(&hu->lock, lock_flags);
@@ -640,7 +640,7 @@ static int brcm_recv(struct hci_uart *hu, void *data, int count)
     }
     BRCM_HCI_DBG(V4L2_DBG_RX, "%s count %d",__func__,count);
 
-#ifdef CONFIG_MACH_SONY_SHINANO
+#ifdef CONFIG_BT_BCM4339
     bcm_bt_lpm_reset_timer();
 #endif
     return count;
