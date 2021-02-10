@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9e7247cd_623289b9",
+        "filename": "drivers/bluetooth/broadcom/line_discipline_driver/brcm_hci.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 28067
+      },
+      "writtenOn": "2021-02-10T22:37:30Z",
+      "side": 0,
+      "message": "CONFIG_MACH_SONY_SHINANO is defined nowhere in this kernel tree, so this disabled bluetooth power management. instead, check for CONFIG_BT_BCM4339, because the callback functions are defined there.",
+      "range": {
+        "startLine": 50,
+        "startChar": 7,
+        "endLine": 50,
+        "endChar": 31
+      },
+      "revId": "48138c45f41ff088e833258d473ceb5af38a82cc",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
