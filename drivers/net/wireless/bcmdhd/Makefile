@@ -10,12 +10,12 @@ DHDCFLAGS += -Wall -Wstrict-prototypes -Dlinux -DLINUX -DBCMDRIVER            \
 	-DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT                             \
 	-DEMBEDDED_PLATFORM -DPNO_SUPPORT  -DSHOW_LOGTRACE                    \
 	-DDHD_DONOT_FORWARD_BCMEVENT_AS_NETWORK_PKT                           \
-	-DCUSTOMER_HW2 -DGET_CUSTOM_MAC_ENABLE
+	-DGET_CUSTOM_MAC_ENABLE
 
 #################
 # Common feature
 #################
-
+DHDCFLAGS += -DCUSTOMER_HW2 -DCUSTOMER_HW5
 DHDCFLAGS += -DWL_CFG80211
 # Print out kernel panic point of file and line info when assertion happened
 DHDCFLAGS += -DBCMASSERT_LOG
@@ -139,6 +139,10 @@ ifneq ($(filter y, $(CONFIG_BCM4356) $(CONFIG_BCM4358)),)
 
   DHDCFLAGS += -DDNGL_EVENT_SUPPORT
   DHDCFLAGS += -DNDO_CONFIG_SUPPORT
+endif
+
+ifneq ($(CONFIG_BCM4354),)
+  DHDCFLAGS += -DSOMC_MIMO
 endif
 
 # bcn_timeout
