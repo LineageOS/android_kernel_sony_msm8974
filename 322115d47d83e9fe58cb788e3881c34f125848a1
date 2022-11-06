@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "baac7bfc_1c6951f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2022-11-06T19:52:20Z",
+      "side": 1,
+      "message": "The chain is tested on z3c where it doesn\u0027t cause any obvious harm",
+      "revId": "322115d47d83e9fe58cb788e3881c34f125848a1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
